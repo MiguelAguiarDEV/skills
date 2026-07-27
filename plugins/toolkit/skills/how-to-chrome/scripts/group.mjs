@@ -110,7 +110,8 @@ async function main() {
   if (o.cmd === "open") {
     if (!o.urls.length) throw new Error("Give me at least one url: node group.mjs open <url>");
     const r = await evalSW(`openInGroup(${JSON.stringify(o.urls)}, ${JSON.stringify(o.title)}, ${JSON.stringify(o.color)})`);
-    console.log(`Group "${o.title}" (${o.color}) created with ${r.tabIds.length} tab(s). groupId=${r.groupId}`);
+    const verb = r.reused ? `Reused existing group "${o.title}"` : `Created group "${o.title}" (${o.color})`;
+    console.log(`${verb}, ${r.tabIds.length} tab(s) added. groupId=${r.groupId}`);
   }
 
   const status = await evalSW("groupsStatus()");

@@ -151,7 +151,13 @@ node scripts/group.mjs status                  # lists groups and tabs
 node scripts/group.mjs open <url> --title Claude --color orange  # custom title/color
 ```
 Default title is `Claude`, default color is `yellow` (valid colors: grey blue
-red yellow green pink purple cyan orange). The extension lives in
+red yellow green pink purple cyan orange). **`open` reuses an existing group
+with that title (in any window) if one is already open**, adding the new
+tabs to it instead of creating a duplicate group; only a freshly created
+group gets its title/color applied, reusing one leaves it exactly as it was
+(so it will not silently change color or expand a group you collapsed by
+hand). The console output says `Created group ...` vs `Reused existing group
+...` so you can tell which happened. The extension lives in
 `scripts/ext-group/` (only `tabs` + `tabGroups` permissions).
 
 ## Technical notes (read before touching capture logic)
