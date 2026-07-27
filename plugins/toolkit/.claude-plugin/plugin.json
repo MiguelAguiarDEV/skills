@@ -1,7 +1,7 @@
 {
   "name": "toolkit",
   "description": "Bundle of personal skills: how-to-chrome (control Chrome via CDP) and grill-me (stress-test a plan or design through questions).",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": {
     "name": "Miguel Alejandro Santiesteban Aguiar"
   }

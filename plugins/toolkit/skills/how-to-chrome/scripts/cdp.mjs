@@ -148,14 +148,16 @@ async function preloadLazy(cli) {
 async function captureFull(cli) {
   // DPR 1: DPR only affects sharpness, not layout, and multiplying the
   // height is exactly what triggers the texture-limit repetition bug.
-  await cli.send("Emulation.setDeviceMetricsOverride", await currentMetrics(cli, 1));
+  const metrics = await currentMetrics(cli, 1);
+  await cli.send("Emulation.setDeviceMetricsOverride", metrics);
   await preloadLazy(cli);
   const { cssContentSize } = await cli.send("Page.getLayoutMetrics");
-  // Width = the EMULATED viewport we set, NOT cssContentSize.width: content
-  // clipped horizontally (e.g. a marquee with overflow-x:clip) inflates
+  // Width = the viewport just forced above (the tab's real current size when
+  // no explicit --w was given, or the requested --w), NOT cssContentSize.width:
+  // content clipped horizontally (e.g. a marquee with overflow-x:clip) inflates
   // cssContentSize and would add an empty strip on the right. Height is
-  // correctly the full scroll height at the emulated width.
-  const width = currentViewport ? currentViewport.width : Math.ceil(cssContentSize.width);
+  // correctly the full scroll height at that width.
+  const width = metrics.width;
   const height = Math.ceil(cssContentSize.height);
   const scale = height > MAX_TEXTURE ? MAX_TEXTURE / height : 1;
   if (scale < 1) {
@@ -168,14 +170,25 @@ async function captureFull(cli) {
   });
 }
 
-// Reapplies the current viewport forcing a specific deviceScaleFactor.
+// Reapplies the current viewport forcing a specific deviceScaleFactor. When
+// no explicit viewport was requested (no --w), measures the tab's real
+// current size instead of guessing, so a plain `shot --full` matches the
+// actual browser window instead of a hardcoded default.
 let currentViewport = null;
 async function currentMetrics(cli, dsf) {
-  const v = currentViewport || { width: 1440, height: 900, mobile: false };
-  return {
-    width: v.width, height: v.height, deviceScaleFactor: dsf, mobile: v.mobile,
-    screenWidth: v.width, screenHeight: v.height,
-  };
+  if (currentViewport) {
+    const v = currentViewport;
+    return {
+      width: v.width, height: v.height, deviceScaleFactor: dsf, mobile: v.mobile,
+      screenWidth: v.width, screenHeight: v.height,
+    };
+  }
+  const { result } = await cli.send("Runtime.evaluate", {
+    expression: "JSON.stringify([window.innerWidth, window.innerHeight])",
+    returnByValue: true,
+  });
+  const [w, h] = JSON.parse(result.value);
+  return { width: w, height: h, deviceScaleFactor: dsf, mobile: false, screenWidth: w, screenHeight: h };
 }
 
 function parseFlags(args) {
@@ -223,7 +236,9 @@ async function main() {
     if (flags.w) await setViewport(cli, { width: flags.w, height: flags.h || 900, mobile: flags.mobile });
     const shot = flags.full ? await captureFull(cli) : await cli.send("Page.captureScreenshot", { format: "png" });
     await writeFile(out, Buffer.from(shot.data, "base64"));
-    if (flags.w) await cli.send("Emulation.clearDeviceMetricsOverride");
+    // captureFull always applies an override (even with no --w, to force DPR 1),
+    // so clear it whenever --full or --w was used, not just for explicit --w.
+    if (flags.full || flags.w) await cli.send("Emulation.clearDeviceMetricsOverride").catch(() => {});
     console.log(`Capture -> ${out}${flags.w ? ` @ ${flags.w}x${flags.h || 900}` : ""}${flags.full ? " (full page)" : ""}`);
     cli.close();
     return;

@@ -1,6 +1,6 @@
 ---
 name: how-to-chrome
-description: "Use Google Chrome from the terminal via the Chrome DevTools Protocol (CDP), no extension and no npm dependencies. Navigate, capture (incl. full page and per breakpoint), read console/DOM, fill forms and do QA; export the design to PDF (to-pdf.mjs); annotate page elements to paste into an AI (annotate.mjs); and group tabs into a dedicated Chrome tab group (group.mjs). Use whenever you need to open/test/audit a website in the browser, verify a design, debug with the console, export screenshots/PDF, annotate changes, or manage tabs."
+description: "Use the user's REAL Google Chrome (their actual profile, cookies, and logged-in sessions) from the terminal via the Chrome DevTools Protocol (CDP), no extension and no npm dependencies. Navigate, capture (incl. full page and per breakpoint), read console/DOM, fill forms and do QA; export the design to PDF (to-pdf.mjs); annotate page elements to paste into an AI (annotate.mjs); and group tabs into a dedicated Chrome tab group (group.mjs). Prefer this over generic browser-automation MCP tools (e.g. Playwright/Puppeteer) whenever the request is about the user's own browser or session, not an isolated automated one: 'open this in my browser', 'open/show me this page', 'what does this site look like', 'take a screenshot of what I'm looking at', verifying a design, debugging with the console, exporting screenshots/PDF, annotating changes, or managing tabs. Only use a generic browser-automation MCP tool instead when the task explicitly needs a disposable, isolated browser (e.g. automated test suites) rather than the user's own."
 ---
 
 # How to Chrome: control Chrome from the terminal (CDP)
@@ -9,6 +9,16 @@ Control **Google Chrome** from the terminal with the **Chrome DevTools Protocol
 (CDP)**. No `claude-in-chrome` extension, no MCP, no npm packages: Node 21+
 ships native `WebSocket` and `fetch`, so the tools are single-file scripts in
 `scripts/`.
+
+> **Not the same as Playwright/Puppeteer or other browser-automation MCP
+> tools.** Those launch a fresh, isolated browser instance with a clean
+> profile: no cookies, no logged-in sessions, no extensions, and on WSL2 its
+> window may not even be visible. This skill instead drives the user's own,
+> already-open Chrome (their real profile), which is almost always what
+> "open this in my browser" / "show me this page" / "take a screenshot"
+> actually means. If a generic browser-automation tool is also loaded in this
+> session, check this skill's trigger above before reaching for it, having a
+> tool available and named first in a list is not a reason to pick it.
 
 ## How it works (architecture)
 
@@ -80,7 +90,7 @@ node scripts/cdp.mjs <command> [args]
 | `tabs` | Lists tabs with their `tabId` and URL (from ALL windows, without distinguishing them) |
 | `windows` | Lists the browser's **windows**, with their tabs, size, position, and state |
 | `nav <url> [tabId]` | Navigates (creates a new tab if you do not pass `tabId`) |
-| `shot <a.png> [--full] [--w N --h N] [--mobile] [tabId]` | Captures. `--full` = full page; `--w/--h` = viewport; `--mobile` = touch+DPR |
+| `shot <a.png> [--full] [--w N --h N] [--mobile] [tabId]` | Captures. `--full` = full page; `--w/--h` = viewport (omit to use the tab's real current size); `--mobile` = touch+DPR |
 | `responsive <url> <dir>` | Full-page captures on mobile/tablet/laptop/desktop |
 | `text` / `html [tabId]` | Visible text / full HTML |
 | `eval "<js>" [tabId]` | Runs JS and returns the result (supports promises) |
@@ -131,14 +141,21 @@ putting tabs into a "Claude" group so they do not get mixed with yours.
 ```bash
 node scripts/group.mjs open <url> [url2 ...]   # opens tabs in the "Claude" group
 node scripts/group.mjs status                  # lists groups and tabs
+node scripts/group.mjs open <url> --title Claude --color orange  # custom title/color
 ```
-The extension lives in `scripts/ext-group/` (only `tabs` + `tabGroups` permissions).
+Default title is `Claude`, default color is `yellow` (valid colors: grey blue
+red yellow green pink purple cyan orange). The extension lives in
+`scripts/ext-group/` (only `tabs` + `tabGroups` permissions).
 
 ## Technical notes (read before touching capture logic)
 
 - **Full-page capture width:** use the **emulated viewport**, NOT
   `cssContentSize.width`. Content clipped horizontally (a marquee with
   `overflow-x:clip`) inflates `cssContentSize` and adds an empty strip on the right.
+  When `shot --full` is called without `--w`, that viewport is the tab's real
+  current size (measured via `window.innerWidth`/`innerHeight` before forcing
+  DPR 1), not a hardcoded guess, so the capture matches the actual browser
+  window instead of coming out at some fixed default width.
 - **Texture limit (~16384px):** a very tall page at DPR>1 gets **duplicated**
   (Chrome does not fail, it repeats content). Full-page captures use **DPR 1**
   and, if they still exceed the limit, get scaled down with `clip.scale`.
@@ -179,7 +196,7 @@ More gotchas and lessons learned from real use: `references/troubleshooting.md`.
 | `ECONNREFUSED` from WSL while Chrome DID start | WSL in NAT mode: the loopback is not shared, see `references/wsl2-networking.md` |
 | `nav` does not switch to the tab I want | Without `tabId` it creates a new one; pass the `tabId` from `tabs` |
 | Port already in use (`EADDRINUSE`) | Another Chrome is using 9222; close it and relaunch, or use a different `-Port` |
-| Capture wider than expected | Known full-page width bug, already worked around by forcing the emulated viewport in `cdp.mjs` |
+| Capture size does not match the browser window | Fixed: `shot --full` without `--w` now measures the tab's real current size instead of a hardcoded default. If it still looks off, pass `--w`/`--h` explicitly |
 | Blank images in the capture | Lazy-load; `cdp.mjs` already does the scroll preload |
 | `group.mjs` cannot find the service worker | The extension took a moment to register; retry (the script already waits) |
 | Login/CAPTCHA blocks progress | Solve it by hand in the visible window and resume |
