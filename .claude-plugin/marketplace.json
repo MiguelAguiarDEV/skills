@@ -11,7 +11,7 @@
     {
       "name": "how-to-chrome",
       "description": "Control Google Chrome from the terminal via the Chrome DevTools Protocol (CDP): navigate, capture, do responsive QA, export to PDF, annotate elements for AI, and group tabs.",
-      "source": "./",
+      "source": "./plugins/how-to-chrome",
       "strict": false,
       "skills": [
         "./skills/how-to-chrome"
@@ -20,7 +20,7 @@
     {
       "name": "grill-me",
       "description": "Interroga al usuario sin descanso sobre un plan o diseno hasta alcanzar entendimiento compartido, resolviendo rama a rama del arbol de decision.",
-      "source": "./",
+      "source": "./plugins/grill-me",
       "strict": false,
       "skills": [
         "./skills/grill-me"
