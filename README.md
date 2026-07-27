@@ -50,6 +50,29 @@ cargarse siempre. Registra la skill como plugin en
 [`.claude-plugin/marketplace.json`](./.claude-plugin/marketplace.json) para que
 sea instalable individualmente.
 
+## Estructura del repo
+
+Todos los plugins de este marketplace comparten `"source": "./"` (la raiz del
+repo), asi que los componentes de plugin que no son skills viven tambien en la
+raiz, no dentro de cada carpeta de `skills/<nombre>/`:
+
+| Carpeta / archivo | Estado | Para que |
+|---|---|---|
+| `skills/` | En uso | Skills (`SKILL.md` + `scripts/` + `references/`) |
+| [`agents/`](./agents) | Placeholder | Definiciones de subagentes personalizados |
+| [`hooks/`](./hooks) | Placeholder | `hooks.json`, manejadores de eventos del ciclo de vida |
+| [`commands/`](./commands) | Placeholder | Skills como Markdown plano (estilo legacy; usar `skills/` en su lugar) |
+| [`monitors/`](./monitors) | Placeholder | `monitors.json`, monitores de fondo (logs, ficheros, estado externo) |
+| [`bin/`](./bin) | Placeholder | Ejecutables anadidos al `PATH` de la herramienta Bash |
+| `.mcp.json` | No creado aun | Configuracion de servidores MCP |
+| `.lsp.json` | No creado aun | Configuracion de servidores LSP |
+| `settings.json` | No creado aun | Config por defecto del plugin (`agent`, `subagentStatusLine`) |
+
+Los tres ultimos son ficheros sueltos (no carpetas) definidos por la
+[referencia de plugins](https://code.claude.com/docs/en/plugins-reference);
+se documentan aqui como puntos de extension reservados, sin crearlos todavia
+para no activar nada por accidente.
+
 ## Licencia
 
 [MIT](./LICENSE).
