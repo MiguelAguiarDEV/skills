@@ -1,43 +1,43 @@
-# Configuracion persistente: Chrome siempre con el puerto CDP
+# Persistent setup: Chrome always with the CDP port
 
-> **Garantia de partida:** todo lo de este documento vive en una carpeta de
-> perfil **nueva y separada** (`CDP-Profile`). En ningun momento se lee,
-> modifica ni borra `%LOCALAPPDATA%\Google\Chrome\User Data` (tu perfil de
-> Chrome real). Tus cookies, contrasenas guardadas, historial, extensiones y
-> sesion iniciada **no se tocan**. Lo unico que puede cambiar es **que abre el
-> icono de Chrome** si eliges la opcion "siempre" de mas abajo — lee el aviso
-> antes de aplicarla.
+> **Starting guarantee:** everything in this document lives in a **new,
+> separate** profile folder (`CDP-Profile`). At no point is
+> `%LOCALAPPDATA%\Google\Chrome\User Data` (your real Chrome profile) read,
+> modified, or deleted. Your cookies, saved passwords, history, extensions,
+> and logged-in session **are not touched**. The only thing that can change
+> is **what your Chrome icon opens**, if you pick the "always" option below.
+> Read the warning before applying it.
 
-Para no relanzar Chrome en cada sesion, se puede dejar Chrome configurado para
-arrancar con el puerto de debug sin tener que lanzarlo a mano cada vez.
+To avoid relaunching Chrome every session, you can leave Chrome configured to
+start with the debug port without having to launch it by hand each time.
 
-## El obstaculo: mitigacion de Chrome 136+
+## The obstacle: the Chrome 136+ mitigation
 
-Desde Chrome 136 el navegador **ignora `--remote-debugging-port` si el perfil
-es el POR DEFECTO** (`…\User Data`, el de tu cuenta real). Es una mitigacion
-de seguridad, no evitable por flags — pasar `--user-data-dir` apuntando al
-default tampoco vale. La unica salida es un **perfil dedicado**: una carpeta
-de perfil distinta, vacia al principio, que Chrome trata como una cuenta de
-navegador separada.
+Since Chrome 136 the browser **ignores `--remote-debugging-port` if the
+profile is the DEFAULT one** (`...\User Data`, your real account). It is a
+security mitigation, not avoidable via flags, pointing `--user-data-dir` at
+the default folder does not work either. The only way around it is a
+**dedicated profile**: a different profile folder, empty at first, that
+Chrome treats as a separate browser account.
 
-Confirmado empiricamente con test A/B: mismo Chrome, mismos flags, unica
-diferencia el `user-data-dir` → con el perfil por defecto el puerto no se
-expone; con un perfil dedicado si.
+Confirmed empirically with an A/B test: same Chrome, same flags, the only
+difference being `user-data-dir`, with the default profile the port is not
+exposed; with a dedicated profile it is.
 
-Justo por ser una carpeta separada, crear y usar este perfil dedicado **no
-requiere tocar tu perfil real para nada**: no se lee, no se copia, no se
-borra. El perfil dedicado empieza vacio (sin tus cookies ni logins) y solo
-recupera lo que **Chrome Sync** sincronice si inicias sesion en el — es un
-perfil nuevo, no una copia del tuyo.
+Precisely because it is a separate folder, creating and using this dedicated
+profile **requires no touching of your real profile whatsoever**: it is not
+read, not copied, not deleted. The dedicated profile starts empty (no
+cookies or logins of yours) and only recovers what **Chrome Sync**
+synchronizes if you sign in on it, it is a new profile, not a copy of yours.
 
-## Opcion recomendada: acceso directo NUEVO y dedicado (cero impacto en tu Chrome de siempre)
+## Recommended option: a NEW, dedicated shortcut (zero impact on your everyday Chrome)
 
-La forma de tener el puerto CDP disponible sin tocar en absoluto tu manera de
-navegar cada dia: crear **un unico acceso directo nuevo** ("Chrome (CDP)")
-que abre el perfil dedicado, dejando **todos tus accesos directos actuales
-intactos** — el icono de Chrome de siempre sigue abriendo tu perfil real,
-con tus cookies, sesiones y contrasenas exactamente igual que hoy. Usas el
-acceso nuevo solo cuando quieras que un agente controle Chrome.
+The way to have the CDP port available without touching your daily browsing
+at all: create **a single new shortcut** ("Chrome (CDP)") that opens the
+dedicated profile, leaving **all your current shortcuts untouched**, your
+everyday Chrome icon keeps opening your real profile, with your cookies,
+sessions, and passwords exactly as they are today. You only use the new
+shortcut when you want an agent to control Chrome.
 
 ```powershell
 $chrome = @(
@@ -57,36 +57,36 @@ $lnk.IconLocation = "$chrome,0"
 $lnk.Save()
 ```
 
-Esto **no modifica ningun acceso directo existente** ni ningun archivo de tu
-perfil real — solo crea un `.lnk` nuevo en el escritorio. Verificar (abriendo
-Chrome desde ese nuevo icono): `curl http://127.0.0.1:9222/json/version` debe
-devolver el `Browser`.
+This **does not modify any existing shortcut** or any file in your real
+profile, it only creates a new `.lnk` on the desktop. Verify (opening Chrome
+from that new icon): `curl http://127.0.0.1:9222/json/version` should return
+the `Browser` info.
 
-`scripts/launch-chrome.ps1` hace lo mismo por linea de comandos (lanza el
-perfil dedicado sin crear accesos directos), asi que en la practica muchas
-veces ni este paso hace falta.
+`scripts/launch-chrome.ps1` does the same thing from the command line
+(launches the dedicated profile without creating any shortcut), so in
+practice this step is often not even needed.
 
-## Alternativa (mas agresiva): que Chrome abra SIEMPRE con CDP, se abra como se abra
+## Alternative (more aggressive): make Chrome ALWAYS start with CDP, however it is opened
 
-Existe una opcion mas comoda pero mas invasiva: reescribir **todos** tus
-accesos directos de Chrome (escritorio, barra de tareas, Quick Launch) para
-que lleven las flags del puerto y el perfil dedicado, de forma que no haga
-falta acordarse de usar un icono especial.
+There is a more convenient but more invasive option: rewriting **all** of
+your Chrome shortcuts (desktop, taskbar, Quick Launch) so they carry the port
+and dedicated-profile flags, so you never have to remember to use a special
+icon.
 
-> ⚠️ **Que cambia de verdad:** a partir de aplicar esto, hacer doble clic en
-> tu icono de Chrome de toda la vida abre el **perfil dedicado** (inicialmente
-> vacio), no tu perfil real. Tu perfil real (`User Data`) sigue intacto en
-> disco — nada se borra — pero **dejas de verlo** a traves de esos accesos
-> directos hasta que lo abras explicitamente (ver "Volver a tu perfil real"
-> abajo) o repongas sesiones vía Chrome Sync. Ten en cuenta que Sync **no
-> sincroniza todo**: cookies de sitios donde no marcaste "recordar sesion",
-> datos locales de algunas extensiones, o contrasenas si excluiste ese tipo de
-> dato del sync, no vuelven solos. Usa esta opcion solo si quieres que el
-> perfil dedicado sea tu navegador de trabajo a partir de ahora; si solo
-> quieres CDP disponible sin renunciar a nada de tu dia a dia, usa la opcion
-> recomendada de arriba.
+> WARNING, **what actually changes:** once you apply this, double-clicking
+> your regular, long-standing Chrome icon opens the **dedicated profile**
+> (empty at first), not your real one. Your real profile (`User Data`) stays
+> intact on disk, nothing gets deleted, but **you stop seeing it** through
+> those shortcuts until you open it explicitly (see "Getting back to your
+> real profile" below) or restore sessions via Chrome Sync. Keep in mind Sync
+> **does not sync everything**: cookies from sites where you did not check
+> "stay signed in", local data from some extensions, or passwords if you
+> excluded that data type from sync, do not come back on their own. Use this
+> option only if you want the dedicated profile to become your working
+> browser from now on; if you just want CDP available without giving up any
+> of your everyday browsing, use the recommended option above.
 
-Si aun asi la quieres:
+If you still want it:
 
 ```powershell
 $udd   = "$env:LOCALAPPDATA\Google\Chrome\CDP-Profile"
@@ -101,53 +101,52 @@ foreach($d in @("$env:USERPROFILE\Desktop","$env:PUBLIC\Desktop",
 }
 ```
 
-Repetible — util si una actualizacion de Chrome regenera los accesos y
-pierden las flags. **Verificar** (Chrome abierto por cualquier acceso
-directo): `curl http://127.0.0.1:9222/json/version` → debe devolver el
-`Browser`.
+Repeatable, useful if a Chrome update regenerates the shortcuts and they lose
+the flags. **Verify** (Chrome opened from any shortcut):
+`curl http://127.0.0.1:9222/json/version` should return the `Browser` info.
 
-### Volver a tu perfil real sin deshacer nada
+### Getting back to your real profile without undoing anything
 
-Tu perfil real nunca se movio ni se borro; sigue en
-`%LOCALAPPDATA%\Google\Chrome\User Data`. Para abrirlo explicitamente aunque
-los accesos directos ya apunten al perfil dedicado:
+Your real profile never moved or got deleted, it is still at
+`%LOCALAPPDATA%\Google\Chrome\User Data`. To open it explicitly even if your
+shortcuts already point at the dedicated profile:
 
 ```powershell
 & "$env:ProgramFiles\Google\Chrome\Application\chrome.exe" `
   --user-data-dir="$env:LOCALAPPDATA\Google\Chrome\User Data" --profile-directory=Default
 ```
 
-(sin `--remote-debugging-port`: es tu Chrome normal, sin CDP). Para revertir
-del todo los accesos directos, vuelve a correr el script de reescritura de
-arriba pero con `$flags = ""` (deja `$l.Arguments` vacio) en vez de las flags
-de CDP.
+(without `--remote-debugging-port`: this is your normal Chrome, no CDP). To
+fully revert the shortcuts, run the rewrite script above again but with
+`$flags = ""` (leave `$l.Arguments` empty) instead of the CDP flags.
 
-### Reconfigurar los accesos directos
+### Reconfiguring the shortcuts
 
-Repite el mismo bloque de la alternativa agresiva de arriba cuantas veces
-haga falta — es idempotente.
+Repeat the same block from the aggressive alternative above as many times as
+needed, it is idempotent.
 
-**Verificar** (Chrome abierto por cualquier acceso directo):
-`curl http://127.0.0.1:9222/json/version` → debe devolver el `Browser`.
+**Verify** (Chrome opened from any shortcut):
+`curl http://127.0.0.1:9222/json/version` should return the `Browser` info.
 
-## Limitaciones
+## Limitations
 
-- Cubre abrir Chrome por **acceso directo**. Enlaces abiertos desde OTRAS apps
-  (correo, etc.) usan el handler del registro y **no** llevan el flag;
-  cubrirlos exigiria tocar `HKCU\…\ChromeHTML\shell\open\command` (mas
-  intrusivo, no cubierto aqui).
-- El **menu inicio de sistema** (`C:\ProgramData\…\Start Menu`) requiere admin;
-  puede no modificarse.
-- Si Chrome ya esta abierto, un nuevo lanzamiento NO reaplica flags: cerrar del
-  todo (`taskkill /IM chrome.exe /F`) y reabrir. `scripts/launch-chrome.ps1` ya
-  hace esto por ti. `taskkill` cierra pestanas sin guardar cambios en curso
-  (formularios a medio rellenar, etc.), pero no borra cookies, historial ni
-  sesiones guardadas — eso vive en disco, no en el proceso.
+- This covers opening Chrome via a **shortcut**. Links opened from OTHER apps
+  (email, etc.) use the registry handler and do **not** carry the flag,
+  covering those would require touching
+  `HKCU\...\ChromeHTML\shell\open\command` (more intrusive, not covered here).
+- The **system Start menu** (`C:\ProgramData\...\Start Menu`) requires admin
+  rights and may not be modifiable.
+- If Chrome is already open, a new launch does NOT reapply flags: close it
+  completely (`taskkill /IM chrome.exe /F`) and reopen it.
+  `scripts/launch-chrome.ps1` already does this for you. `taskkill` closes
+  tabs without saving in-progress changes (half-filled forms, etc.), but it
+  does not delete cookies, history, or saved sessions, those live on disk,
+  not in the process.
 
-## Seguridad
+## Security
 
-⚠️ Con el puerto de debug **siempre** abierto, cualquier proceso local puede
-controlar ese Chrome. Es un trade-off consciente por comodidad, no lo actives
-en una maquina compartida o expuesta. Revertir: quitar
-`--remote-debugging-port=9222 --user-data-dir=…` de los accesos directos (o
-borrar solo el acceso directo nuevo si usaste la opcion recomendada).
+WARNING, with the debug port **always** open, any local process can control
+Chrome. It is a deliberate trade-off for convenience, do not enable it on a
+shared or exposed machine. To revert: remove
+`--remote-debugging-port=9222 --user-data-dir=...` from the shortcuts (or
+just delete the new shortcut if you used the recommended option).

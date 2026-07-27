@@ -1,36 +1,36 @@
-// Service worker de la extensión. No hace nada por sí solo: expone helpers que
-// Claude invoca por CDP (Runtime.evaluate en este contexto) para agrupar pestañas
-// en un grupo propio. Solo la API de extensiones puede tocar chrome.tabGroups.
+// Extension service worker. Does nothing on its own: exposes helpers that
+// Claude calls via CDP (Runtime.evaluate in this context) to group tabs into
+// a dedicated group. Only the extensions API can touch chrome.tabGroups.
 
-// Abre urls en pestañas nuevas y las mete todas en un grupo con nombre/color.
-globalThis.abrirEnGrupo = async (urls, titulo = "Claude", color = "yellow", collapsed = false) => {
+// Opens urls in new tabs and puts them all into a group with a name/color.
+globalThis.openInGroup = async (urls, title = "Claude", color = "yellow", collapsed = false) => {
   const tabs = [];
   for (const u of urls) tabs.push(await chrome.tabs.create({ url: u, active: false }));
   const groupId = await chrome.tabs.group({ tabIds: tabs.map((t) => t.id) });
-  await chrome.tabGroups.update(groupId, { title: titulo, color, collapsed });
+  await chrome.tabGroups.update(groupId, { title, color, collapsed });
   return { groupId, tabIds: tabs.map((t) => t.id) };
 };
 
-// Mete pestañas ya existentes (por id) en un grupo (crea el grupo si no se pasa).
-globalThis.agrupar = async (tabIds, titulo = "Claude", color = "yellow", groupId) => {
+// Puts already-existing tabs (by id) into a group (creates the group if none is given).
+globalThis.groupTabs = async (tabIds, title = "Claude", color = "yellow", groupId) => {
   const gid = await chrome.tabs.group(groupId ? { tabIds, groupId } : { tabIds });
-  await chrome.tabGroups.update(gid, { title: titulo, color });
+  await chrome.tabGroups.update(gid, { title, color });
   return gid;
 };
 
-// Devuelve el grupo "Claude" si existe (para reutilizarlo).
-globalThis.buscarGrupo = async (titulo = "Claude") => {
-  const gs = await chrome.tabGroups.query({ title: titulo });
+// Returns the "Claude" group if it exists (to reuse it).
+globalThis.findGroup = async (title = "Claude") => {
+  const gs = await chrome.tabGroups.query({ title });
   return gs[0] || null;
 };
 
-// Estado: grupos actuales + pestañas por grupo (para verificar).
-globalThis.estadoGrupos = async () => {
-  const grupos = await chrome.tabGroups.query({});
+// Status: current groups + tabs per group (for verification).
+globalThis.groupsStatus = async () => {
+  const groups = await chrome.tabGroups.query({});
   const out = [];
-  for (const g of grupos) {
+  for (const g of groups) {
     const tabs = await chrome.tabs.query({ groupId: g.id });
-    out.push({ id: g.id, titulo: g.title, color: g.color, collapsed: g.collapsed, pestanas: tabs.map((t) => t.title) });
+    out.push({ id: g.id, title: g.title, color: g.color, collapsed: g.collapsed, tabs: tabs.map((t) => t.title) });
   }
   return out;
 };

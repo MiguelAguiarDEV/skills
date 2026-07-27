@@ -1,15 +1,16 @@
-// grupo.mjs — crea/usa un GRUPO de pestañas propio de Chrome ("Claude") sin
-// relanzar el navegador. Carga una extensión mínima por CDP (Extensions.loadUnpacked)
-// y ejecuta chrome.tabs.group en su service worker. Cero relanzado, cero npm.
+// grupo.mjs: creates/uses a dedicated Chrome tab GROUP ("Claude") without
+// relaunching the browser. Loads a minimal extension via CDP
+// (Extensions.loadUnpacked) and runs chrome.tabs.group in its service
+// worker. No relaunch, no npm.
 //
-// Requiere Chrome con --remote-debugging-port=9222.
+// Requires Chrome with --remote-debugging-port=9222.
 //
-// Uso:
-//   node grupo.mjs abrir <url> [url2 ...]     -> abre esas urls en el grupo "Claude"
-//   node grupo.mjs estado                     -> lista los grupos y sus pestañas
-//   node grupo.mjs [--titulo Claude] [--color yellow]
+// Usage:
+//   node grupo.mjs open <url> [url2 ...]      -> opens those urls in the "Claude" group
+//   node grupo.mjs status                     -> lists the groups and their tabs
+//   node grupo.mjs [--title Claude] [--color yellow]
 //
-// Colores válidos: grey blue red yellow green pink purple cyan orange
+// Valid colors: grey blue red yellow green pink purple cyan orange
 
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
@@ -18,24 +19,25 @@ import { execFileSync } from "node:child_process";
 const HOST = process.env.CDP_HOST || "127.0.0.1:9222";
 const BASE = `http://${HOST}`;
 
-// La ruta de la extensión la resuelve CHROME, no Node. Si el script corre en WSL
-// y Chrome es el binario de Windows, hay que traducir /mnt/c/... a C:\...; con la
-// ruta de Linux, Extensions.loadUnpacked responde "File path cannot be resolved.".
-function rutaParaChrome(p) {
+// The extension path is resolved by CHROME, not Node. If the script runs on
+// WSL and Chrome is the Windows binary, /mnt/c/... must be translated to
+// C:\...; with the Linux path, Extensions.loadUnpacked replies "File path
+// cannot be resolved.".
+function pathForChrome(p) {
   try {
     return execFileSync("wslpath", ["-w", p], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
   } catch {
-    return p; // fuera de WSL no hay wslpath: la ruta ya es nativa
+    return p; // outside WSL there is no wslpath: the path is already native
   }
 }
-const EXT_DIR = rutaParaChrome(resolve(dirname(fileURLToPath(import.meta.url)), "ext-grupos"));
+const EXT_DIR = pathForChrome(resolve(dirname(fileURLToPath(import.meta.url)), "ext-grupos"));
 
 function parse() {
   const a = process.argv.slice(2);
-  const o = { cmd: "estado", urls: [], titulo: "Claude", color: "yellow" };
+  const o = { cmd: "status", urls: [], title: "Claude", color: "yellow" };
   const rest = [];
   for (let i = 0; i < a.length; i++) {
-    if (a[i] === "--titulo") o.titulo = a[++i];
+    if (a[i] === "--title") o.title = a[++i];
     else if (a[i] === "--color") o.color = a[++i];
     else rest.push(a[i]);
   }
@@ -44,7 +46,7 @@ function parse() {
   return o;
 }
 
-// Cliente CDP con soporte de sesiones (sessionId) para hablar con targets.
+// CDP client with session support (sessionId) to talk to targets.
 function connect(wsUrl) {
   return new Promise((res, rej) => {
     const ws = new WebSocket(wsUrl);
@@ -71,19 +73,19 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 async function main() {
   const o = parse();
   const V = await (await fetch(`${BASE}/json/version`)).json();
-  const cli = await connect(V.webSocketDebuggerUrl); // conexión a nivel navegador
+  const cli = await connect(V.webSocketDebuggerUrl); // browser-level connection
 
-  // 1) Cargar la extensión (si ya está cargada, seguimos igualmente).
+  // 1) Load the extension (if it is already loaded, keep going anyway).
   let extId = null;
   try {
     const r = await cli.send("Extensions.loadUnpacked", { path: EXT_DIR });
     extId = r.id;
-    console.log("Extensión cargada:", extId);
+    console.log("Extension loaded:", extId);
   } catch (e) {
-    console.log("loadUnpacked:", e.message.slice(0, 120), "→ intento reutilizar si ya estaba");
+    console.log("loadUnpacked:", e.message.slice(0, 120), "-> trying to reuse it if it was already loaded");
   }
 
-  // 2) Encontrar el service worker de la extensión (aparece como target).
+  // 2) Find the extension's service worker (it shows up as a target).
   let sw = null;
   for (let i = 0; i < 20 && !sw; i++) {
     const { targetInfos } = await cli.send("Target.getTargets");
@@ -93,9 +95,9 @@ async function main() {
       (extId ? t.url.includes(extId) : t.url.endsWith("/bg.js")));
     if (!sw) await sleep(250);
   }
-  if (!sw) throw new Error("No encuentro el service worker de la extensión. ¿La cargó Chrome?");
+  if (!sw) throw new Error("Cannot find the extension's service worker. Did Chrome load it?");
 
-  // 3) Adjuntarse al SW y ejecutar chrome.tabs/tabGroups ahí dentro.
+  // 3) Attach to the SW and run chrome.tabs/tabGroups inside it.
   const { sessionId } = await cli.send("Target.attachToTarget", { targetId: sw.targetId, flatten: true });
   await cli.send("Runtime.enable", {}, sessionId);
   const evalSW = async (expr) => {
@@ -105,15 +107,15 @@ async function main() {
     return result.value;
   };
 
-  if (o.cmd === "abrir") {
-    if (!o.urls.length) throw new Error("Dame al menos una url: node grupo.mjs abrir <url>");
-    const r = await evalSW(`abrirEnGrupo(${JSON.stringify(o.urls)}, ${JSON.stringify(o.titulo)}, ${JSON.stringify(o.color)})`);
-    console.log(`Grupo "${o.titulo}" (${o.color}) creado con ${r.tabIds.length} pestaña(s). groupId=${r.groupId}`);
+  if (o.cmd === "open") {
+    if (!o.urls.length) throw new Error("Give me at least one url: node grupo.mjs open <url>");
+    const r = await evalSW(`openInGroup(${JSON.stringify(o.urls)}, ${JSON.stringify(o.title)}, ${JSON.stringify(o.color)})`);
+    console.log(`Group "${o.title}" (${o.color}) created with ${r.tabIds.length} tab(s). groupId=${r.groupId}`);
   }
 
-  const estado = await evalSW("estadoGrupos()");
-  console.log("\nGrupos actuales:");
-  for (const g of estado) console.log(`  [${g.color}] "${g.titulo}"${g.collapsed ? " (colapsado)" : ""} — ${g.pestanas.length} pestaña(s): ${g.pestanas.map((t) => (t || "").slice(0, 30)).join(" | ")}`);
+  const status = await evalSW("groupsStatus()");
+  console.log("\nCurrent groups:");
+  for (const g of status) console.log(`  [${g.color}] "${g.title}"${g.collapsed ? " (collapsed)" : ""}, ${g.tabs.length} tab(s): ${g.tabs.map((t) => (t || "").slice(0, 30)).join(" | ")}`);
 
   cli.close();
 }

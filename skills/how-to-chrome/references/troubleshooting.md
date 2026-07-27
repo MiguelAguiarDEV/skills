@@ -1,66 +1,67 @@
-# Troubleshooting ampliado y lecciones aprendidas
+# Extended troubleshooting and lessons learned
 
-Tabla rapida de sintomas en el `SKILL.md` principal. Aqui va el detalle de
-causa raiz y los hallazgos de uso real que no caben en la referencia rapida.
+Quick symptom table lives in the main `SKILL.md`. Here is the root-cause
+detail and the real-world findings that do not fit in the quick reference.
 
-## `Extensions.loadUnpacked` falla con "File path cannot be resolved."
+## `Extensions.loadUnpacked` fails with "File path cannot be resolved."
 
-Pasa cuando `grupo.mjs` corre en **WSL** pero Chrome es el binario de
-**Windows**: si le das la ruta Linux de `scripts/ext-grupos/`
-(`/mnt/c/...` o similar), Chrome no puede resolverla — necesita una ruta
-Windows (`C:\...`).
+Happens when `grupo.mjs` runs on **WSL** but Chrome is the **Windows**
+binary: if you give it the Linux path for `scripts/ext-grupos/`
+(`/mnt/c/...` or similar), Chrome cannot resolve it, it needs a Windows path
+(`C:\...`).
 
-**Fix ya aplicado en el script:** `grupo.mjs` traduce la ruta con `wslpath -w`
-antes de pasarsela a `Extensions.loadUnpacked` (funcion `rutaParaChrome()`).
-Fuera de WSL, `wslpath` no existe y el script usa la ruta tal cual.
+**Fix already applied in the script:** `grupo.mjs` translates the path with
+`wslpath -w` before passing it to `Extensions.loadUnpacked` (function
+`pathForChrome()`). Outside WSL, `wslpath` does not exist and the script uses
+the path as-is.
 
-## Contar ventanas/pestanas por el sistema operativo miente
+## Counting windows/tabs via the operating system lies to you
 
-Contar procesos `chrome.exe` con `Get-Process | Where MainWindowTitle` (o
-equivalente) da **siempre 1** aunque haya varias ventanas abiertas: todas las
-ventanas de un mismo perfil cuelgan del **mismo proceso raiz** (los demas
-procesos son renderers de pestana, extension y GPU, sin ventana propia), y
-`MainWindowTitle` devuelve una sola por proceso — la que este en primer plano.
-Ademas ese titulo *cambia* entre consultas, dando la falsa impresion de que el
-usuario navego.
+Counting `chrome.exe` processes with `Get-Process | Where MainWindowTitle`
+(or the equivalent) always gives **1** even when several windows are open:
+all windows of the same profile hang off the **same root process** (the
+other processes are tab, extension, and GPU renderers, with no window of
+their own), and `MainWindowTitle` returns only one per process, whichever is
+in the foreground. That title also *changes* between queries, giving the
+false impression that the user navigated.
 
-**La fuente fiable es el propio navegador:** agrupar los targets de CDP por el
-`windowId` que devuelve `Browser.getWindowForTarget` — es exactamente lo que
-hace `cdp.mjs ventanas`. Vale igual para saber si hay pestanas abiertas, que
-se esta viendo, o en que monitor esta una ventana: la verdad esta en CDP, no
-en la lista de procesos del SO.
+**The reliable source is the browser itself:** group CDP targets by the
+`windowId` returned by `Browser.getWindowForTarget`, which is exactly what
+`cdp.mjs windows` does. The same applies to knowing whether tabs are open,
+what is currently visible, or which monitor a window is on: the truth lives
+in CDP, not in the OS process list.
 
-## `shot`/`eval`/`text` sin `tabId` van a la primera pestana
+## `shot`/`eval`/`text` without `tabId` go to the first tab
 
-Un error facil: navegar con `nav <url>` (sin `tabId`, crea pestana nueva) y
-luego capturar con `shot` sin pasar el `tabId` de esa pestana nueva — captura
-la **primera** pestana de la lista, no la que acabas de abrir. Pasa siempre el
-`tabId` que devuelve `tabs` cuando trabajes con mas de una pestana.
+An easy mistake: navigating with `nav <url>` (without `tabId`, it creates a
+new tab) and then capturing with `shot` without passing that new tab's
+`tabId`, it captures the **first** tab in the list, not the one you just
+opened. Always pass the `tabId` returned by `tabs` when working with more
+than one tab.
 
-## Capturas full-page con `position: sticky` parecen tener bugs de layout que no existen
+## Full-page captures with `position: sticky` look like layout bugs that are not real
 
-Al hacer `shot --full` de una pagina con un nav/header en `position: sticky`,
-puede aparecer un "solape" visual en la captura que **parece** un bug de
-layout real pero es un **artefacto del stitching** de la captura full-page (el
-elemento sticky se repite en la costura entre el viewport capturado y el resto
-del scroll). Antes de reportar un bug de overlap visual, vuelve a capturar a
-viewport real (sin `--full`) para confirmar si es un problema real o solo un
-artefacto de la captura.
+When running `shot --full` on a page with a `position: sticky` nav/header, a
+visual "overlap" can show up in the capture that **looks** like a real
+layout bug but is actually a **stitching artifact** of the full-page capture
+(the sticky element repeats itself at the seam between the captured viewport
+and the rest of the scroll). Before reporting a visual overlap bug, capture
+again at a real viewport (without `--full`) to confirm whether it is a real
+issue or just a capture artifact.
 
-## Animaciones "reveal" por scroll no aparecen en capturas full-page
+## Scroll "reveal" animations do not show up in full-page captures
 
-Ademas del `loading="lazy"` ya cubierto por el precargado de `cdp.mjs`,
-animaciones basadas en `IntersectionObserver` (patron tipico:
-`opacity:0` + clase añadida al entrar en viewport) tampoco se disparan en una
-captura full-page si el elemento nunca entra en el viewport real durante el
-precargado — salen en blanco aunque funcionen bien con scroll real del
-usuario. Si una seccion sale vacia en la captura pero se ve bien en el
-navegador, sospecha primero de esto antes de un bug de CSS.
+Beyond the `loading="lazy"` case already covered by `cdp.mjs`'s preload step,
+`IntersectionObserver`-based animations (typical pattern: `opacity:0` + a
+class added on entering the viewport) also fail to fire during a full-page
+capture if the element never enters the real viewport during the preload
+sweep, they come out blank even though they work fine with real user
+scrolling. If a section renders empty in the capture but looks fine in the
+browser, suspect this before a CSS bug.
 
-## Versión mínima verificada
+## Minimum verified version
 
-Confirmado funcionando con Chrome 136+ (perfil dedicado) y Chrome 150 en
-Windows 11 (build 26200+), WSL2 2.6+, con `networkingMode=mirrored`. Versiones
-de Chrome anteriores a 111 no tienen el problema de
-`--remote-debugging-address` (pero tampoco lo necesitan: exponen el puerto de
-forma mas laxa).
+Confirmed working with Chrome 136+ (dedicated profile) and Chrome 150 on
+Windows 11 (build 26200+), WSL2 2.6+, with `networkingMode=mirrored`. Chrome
+versions before 111 do not have the `--remote-debugging-address` problem
+(but they do not need it either: they expose the port more loosely).

@@ -14,7 +14,7 @@ defecto). Ver [`template/`](./template) para el punto de partida de una skill nu
 
 | Skill | Que hace |
 |-------|----------|
-| [`how-to-chrome`](./skills/how-to-chrome) | Controlar Google Chrome desde el terminal via CDP (Chrome DevTools Protocol): navegar, capturar (incl. pagina completa y responsive), leer consola/DOM, rellenar formularios, exportar a PDF, anotar elementos para pegar a una IA, y agrupar pestanas en un grupo propio de Chrome. Sin extension, sin MCP, sin dependencias npm. |
+| [`how-to-chrome`](./skills/how-to-chrome) | Control Google Chrome from the terminal via CDP (Chrome DevTools Protocol): navigate, capture (incl. full page and responsive), read console/DOM, fill forms, export to PDF, annotate elements to paste into an AI, and group tabs into a dedicated Chrome tab group. No extension, no MCP, no npm dependencies. |
 | [`grill-me`](./skills/grill-me) | Interrogar al usuario sin descanso sobre un plan o diseno hasta alcanzar entendimiento compartido, resolviendo rama a rama del arbol de decision con una respuesta recomendada en cada pregunta. |
 
 ## Instalar en Claude Code

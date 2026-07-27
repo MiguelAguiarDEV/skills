@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "how-to-chrome",
-      "description": "Controlar Google Chrome desde el terminal via Chrome DevTools Protocol (CDP): navegar, capturar, hacer QA responsive, exportar a PDF, anotar elementos para IA y agrupar pestanas.",
+      "description": "Control Google Chrome from the terminal via the Chrome DevTools Protocol (CDP): navigate, capture, do responsive QA, export to PDF, annotate elements for AI, and group tabs.",
       "source": "./",
       "strict": false,
       "skills": [

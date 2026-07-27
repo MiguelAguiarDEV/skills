@@ -1,14 +1,14 @@
-# launch-chrome.ps1 — arranca Chrome con el puerto CDP sobre un perfil DEDICADO (CDP-Profile).
-# Cierra cualquier Chrome abierto (necesario: el perfil solo lo usa una instancia) y relanza
-# con --remote-debugging-port.
+# launch-chrome.ps1: starts Chrome with the CDP port on a DEDICATED profile (CDP-Profile).
+# Closes any open Chrome (necessary: the profile can only be used by one instance) and relaunches
+# it with --remote-debugging-port.
 #
-# IMPORTANTE: Chrome 136+ IGNORA --remote-debugging-port cuando el user-data-dir es el
-# POR DEFECTO (mitigación de seguridad, no evitable). Por eso se usa un perfil propio
-# (CDP-Profile), que sí expone el puerto y persiste logins/extensiones/marcadores
-# (con Chrome Sync se recuperan al iniciar sesión la primera vez).
+# IMPORTANT: Chrome 136+ IGNORES --remote-debugging-port when the user-data-dir is the
+# DEFAULT one (security mitigation, not avoidable). That is why a dedicated profile is
+# used (CDP-Profile), which does expose the port and persists logins/extensions/bookmarks
+# (with Chrome Sync they get restored the first time you sign in).
 #
-# Uso:  pwsh -File launch-chrome.ps1 [-Port 9222] [-CleanProfile]
-#   -CleanProfile  usa un perfil temporal aislado (sin logins) en vez del real.
+# Usage:  pwsh -File launch-chrome.ps1 [-Port 9222] [-CleanProfile]
+#   -CleanProfile  uses an isolated temporary profile (no logins) instead of the real one.
 
 param(
   [int]$Port = 9222,
@@ -20,14 +20,14 @@ $chrome = @(
   "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe",
   "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe"
 ) | Where-Object { Test-Path $_ } | Select-Object -First 1
-if (-not $chrome) { Write-Error "Chrome no encontrado"; exit 1 }
+if (-not $chrome) { Write-Error "Chrome not found"; exit 1 }
 
 if ($CleanProfile) {
   $udd = Join-Path $env:TEMP "cdp-chrome-profile"
 } else {
-  # Perfil DEDICADO (no el default) — es la única forma de exponer el puerto en Chrome 136+.
+  # DEDICATED profile (not the default one): the only way to expose the port on Chrome 136+.
   $udd = "$env:LOCALAPPDATA\Google\Chrome\CDP-Profile"
-  # Relanzar limpio requiere cerrar cualquier Chrome abierto (una instancia por perfil).
+  # A clean relaunch requires closing any open Chrome (one instance per profile).
   Get-Process chrome -ErrorAction SilentlyContinue | ForEach-Object { $_.CloseMainWindow() | Out-Null }
   Start-Sleep -Milliseconds 800
   taskkill /IM chrome.exe /F 2>$null | Out-Null
@@ -42,15 +42,15 @@ $chromeArgs = @(
   "about:blank"
 )
 Start-Process $chrome -ArgumentList $chromeArgs
-Write-Output "Chrome lanzado con CDP en 127.0.0.1:$Port (perfil: $(if($CleanProfile){'aislado'}else{'REAL'}))"
+Write-Output "Chrome launched with CDP on 127.0.0.1:$Port (profile: $(if($CleanProfile){'isolated'}else{'REAL'}))"
 
-# Espera a que el endpoint responda.
+# Wait for the endpoint to respond.
 for ($i = 0; $i -lt 30; $i++) {
   try {
     $v = Invoke-RestMethod -Uri "http://127.0.0.1:$Port/json/version" -TimeoutSec 1 -ErrorAction Stop
-    Write-Output "CDP LISTO -> $($v.Browser)"
+    Write-Output "CDP READY -> $($v.Browser)"
     exit 0
   } catch { Start-Sleep -Milliseconds 500 }
 }
-Write-Error "El endpoint CDP no respondio en 15s"
+Write-Error "The CDP endpoint did not respond within 15s"
 exit 1

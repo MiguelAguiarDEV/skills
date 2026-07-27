@@ -1,12 +1,13 @@
-// Overlay de anotación: se inyecta en la página. Deja seleccionar elementos con
-// el ratón (incluyendo padres cubiertos por sus hijos, navegando la pila con
-// ⬆/⬇ o flechas del teclado), escribirles un comentario, y manda cada anotación
-// al terminal vía window.anotaEnviar (binding CDP). También copia todo al portapapeles.
+// Annotation overlay: injected into the page. Lets you select elements with
+// the mouse (including parents covered by their children, navigating the
+// stack with Up/Down or arrow keys), write a comment on them, and sends each
+// annotation to the terminal via window.sendAnnotation (CDP binding). Also
+// copies everything to the clipboard.
 (() => {
   if (window.__anota) { window.__anota.panel.style.display = "flex"; return; }
 
   const $ = (t, p = {}) => Object.assign(document.createElement(t), p);
-  const anotaciones = [];
+  const annotations = [];
 
   const desc = (el) => {
     if (!el || !el.nodeName) return "?";
@@ -16,43 +17,43 @@
 
   function cssPath(el) {
     if (!(el instanceof Element)) return "";
-    const partes = [];
-    while (el && el.nodeType === 1 && partes.length < 5) {
+    const parts = [];
+    while (el && el.nodeType === 1 && parts.length < 5) {
       let sel = el.nodeName.toLowerCase();
-      if (el.id) { sel += "#" + el.id; partes.unshift(sel); break; }
+      if (el.id) { sel += "#" + el.id; parts.unshift(sel); break; }
       const cls = (el.getAttribute("class") || "").trim().split(/\s+/).filter(Boolean).slice(0, 2);
       if (cls.length) sel += "." + cls.join(".");
       const p = el.parentElement;
       if (p) {
-        const iguales = [...p.children].filter((c) => c.nodeName === el.nodeName);
-        if (iguales.length > 1) sel += ":nth-child(" + ([...p.children].indexOf(el) + 1) + ")";
+        const siblings = [...p.children].filter((c) => c.nodeName === el.nodeName);
+        if (siblings.length > 1) sel += ":nth-child(" + ([...p.children].indexOf(el) + 1) + ")";
       }
-      partes.unshift(sel);
+      parts.unshift(sel);
       el = el.parentElement;
     }
-    return partes.join(" > ");
+    return parts.join(" > ");
   }
 
-  function estilos(el) {
+  function styles(el) {
     const s = getComputedStyle(el);
     const keys = ["display", "color", "background-color", "font-size", "font-weight", "padding", "margin", "border-radius", "width", "height"];
     return keys.map((k) => k + ": " + s.getPropertyValue(k)).join("; ");
   }
 
-  // ── Resaltado ──
-  // position:absolute + coords de PÁGINA (no del viewport): así el recuadro se
-  // mueve junto con el documento al hacer scroll y no se desalinea/muere.
-  const marca = $("div", { id: "__anotaMarca" });
-  Object.assign(marca.style, {
+  // -- Highlight --
+  // position:absolute + PAGE coordinates (not viewport): this way the box
+  // moves along with the document when scrolling and does not drift or die.
+  const marker = $("div", { id: "__anotaMarca" });
+  Object.assign(marker.style, {
     position: "absolute", zIndex: 2147483646, pointerEvents: "none",
     border: "2px solid #FFC20E", background: "rgba(255,194,14,0.12)",
     borderRadius: "3px", display: "none", boxSizing: "border-box",
   });
-  document.body.appendChild(marca);
-  function resaltar(el) {
-    if (!el || !el.getBoundingClientRect) { marca.style.display = "none"; return; }
+  document.body.appendChild(marker);
+  function highlight(el) {
+    if (!el || !el.getBoundingClientRect) { marker.style.display = "none"; return; }
     const r = el.getBoundingClientRect();
-    Object.assign(marca.style, {
+    Object.assign(marker.style, {
       display: "block",
       left: (r.left + window.scrollX) + "px",
       top: (r.top + window.scrollY) + "px",
@@ -60,65 +61,65 @@
     });
   }
 
-  let seleccionando = false;
-  let pila = [];        // elementos apilados en el punto del clic (hijo -> ... -> raíz)
-  let nivel = 0;        // índice actual dentro de la pila
-  let elegido = null;
+  let selecting = false;
+  let stack = [];        // elements stacked at the click point (child -> ... -> root)
+  let level = 0;         // current index within the stack
+  let chosen = null;
 
-  function mostrarElegido() {
-    elegido = pila[nivel] || null;
-    resaltar(elegido);
-    if (elegido) {
-      info.innerHTML = "<b>" + desc(elegido) + "</b> · nivel " + (nivel + 1) + "/" + pila.length +
-        " <span style='opacity:.6'>(⬆/⬇ o flechas para navegar)</span>";
-      btnUp.disabled = nivel >= pila.length - 1;
-      btnDown.disabled = nivel <= 0;
+  function showChosen() {
+    chosen = stack[level] || null;
+    highlight(chosen);
+    if (chosen) {
+      info.innerHTML = "<b>" + desc(chosen) + "</b> - level " + (level + 1) + "/" + stack.length +
+        " <span style='opacity:.6'>(Up/Down or arrow keys to navigate)</span>";
+      btnUp.disabled = level >= stack.length - 1;
+      btnDown.disabled = level <= 0;
     } else {
-      info.textContent = "Ningún elemento seleccionado";
+      info.textContent = "No element selected";
       btnUp.disabled = btnDown.disabled = true;
     }
   }
-  const subir = () => { if (nivel < pila.length - 1) { nivel++; mostrarElegido(); } };
-  const bajar = () => { if (nivel > 0) { nivel--; mostrarElegido(); } };
+  const goUp = () => { if (level < stack.length - 1) { level++; showChosen(); } };
+  const goDown = () => { if (level > 0) { level--; showChosen(); } };
 
-  function alMover(e) {
-    if (!seleccionando) return;
+  function onMove(e) {
+    if (!selecting) return;
     const el = document.elementFromPoint(e.clientX, e.clientY);
-    if (!el || el === marca || panel.contains(el)) { marca.style.display = "none"; return; }
-    resaltar(el);
-    marca.__el = el;
+    if (!el || el === marker || panel.contains(el)) { marker.style.display = "none"; return; }
+    highlight(el);
+    marker.__el = el;
   }
-  function alClic(e) {
-    if (!seleccionando) return;
+  function onClick(e) {
+    if (!selecting) return;
     e.preventDefault(); e.stopPropagation();
-    // Pila completa de elementos en ese punto: hijo -> padre -> ... (así se puede
-    // subir a un div aunque esté totalmente cubierto por sus hijos).
-    pila = document.elementsFromPoint(e.clientX, e.clientY).filter((el) => el !== marca && !panel.contains(el) && el.nodeName !== "HTML");
-    nivel = 0;
-    seleccionando = false;
+    // Full stack of elements at that point: child -> parent -> ... (this way
+    // you can move up to a div even if it is fully covered by its children).
+    stack = document.elementsFromPoint(e.clientX, e.clientY).filter((el) => el !== marker && !panel.contains(el) && el.nodeName !== "HTML");
+    level = 0;
+    selecting = false;
     document.body.style.cursor = "";
-    btnSel.textContent = "🎯 Seleccionar elemento";
-    coment.focus();
-    mostrarElegido();
+    btnSel.textContent = "Select element";
+    comment.focus();
+    showChosen();
   }
-  document.addEventListener("mousemove", alMover, true);
-  document.addEventListener("click", alClic, true);
+  document.addEventListener("mousemove", onMove, true);
+  document.addEventListener("click", onClick, true);
   document.addEventListener("keydown", (e) => {
     if (!window.__anota || panel.style.display === "none") return;
-    if (document.activeElement === coment) return;   // no interferir al escribir
-    if (e.key === "ArrowUp") { e.preventDefault(); subir(); }
-    else if (e.key === "ArrowDown") { e.preventDefault(); bajar(); }
-    else if (e.key === "Escape") { seleccionando = false; document.body.style.cursor = ""; marca.style.display = "none"; btnSel.textContent = "🎯 Seleccionar elemento"; }
+    if (document.activeElement === comment) return;   // do not interfere while typing
+    if (e.key === "ArrowUp") { e.preventDefault(); goUp(); }
+    else if (e.key === "ArrowDown") { e.preventDefault(); goDown(); }
+    else if (e.key === "Escape") { selecting = false; document.body.style.cursor = ""; marker.style.display = "none"; btnSel.textContent = "Select element"; }
   }, true);
 
-  // Recolocar el recuadro al hacer scroll/resize para que siga pegado al elemento
-  // seleccionado (por si hay sticky/fixed o la maqueta se reajusta).
+  // Reposition the box on scroll/resize so it stays attached to the selected
+  // element (in case of sticky/fixed positioning or layout reflow).
   let raf = 0;
-  const reRender = () => { if (elegido && !seleccionando) resaltar(elegido); };
+  const reRender = () => { if (chosen && !selecting) highlight(chosen); };
   window.addEventListener("scroll", () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(reRender); }, true);
   window.addEventListener("resize", reRender);
 
-  // ── Panel ──
+  // -- Panel --
   const panel = $("div");
   Object.assign(panel.style, {
     position: "fixed", zIndex: 2147483647, left: "16px", bottom: "16px", width: "330px",
@@ -127,31 +128,31 @@
     padding: "14px", font: "14px/1.4 system-ui, sans-serif", boxShadow: "0 12px 40px rgba(0,0,0,.5)",
   });
 
-  const tit = $("div", { textContent: "Anotar para IA" });
-  Object.assign(tit.style, { fontWeight: "700", color: "#FFC20E", display: "flex", justifyContent: "space-between", alignItems: "center" });
-  const cerrar = $("span", { textContent: "✕", title: "Cerrar" });
-  Object.assign(cerrar.style, { cursor: "pointer", opacity: ".7" });
-  cerrar.onclick = () => { panel.style.display = "none"; marca.style.display = "none"; };
-  tit.appendChild(cerrar);
+  const title = $("div", { textContent: "Annotate for AI" });
+  Object.assign(title.style, { fontWeight: "700", color: "#FFC20E", display: "flex", justifyContent: "space-between", alignItems: "center" });
+  const closeBtn = $("span", { textContent: "x", title: "Close" });
+  Object.assign(closeBtn.style, { cursor: "pointer", opacity: ".7" });
+  closeBtn.onclick = () => { panel.style.display = "none"; marker.style.display = "none"; };
+  title.appendChild(closeBtn);
 
-  const btnSel = $("button", { textContent: "🎯 Seleccionar elemento" });
+  const btnSel = $("button", { textContent: "Select element" });
   const info = $("div");
-  info.textContent = "Ningún elemento seleccionado";
+  info.textContent = "No element selected";
   Object.assign(info.style, { fontSize: "12px", color: "#A9B4C7", minHeight: "16px" });
 
-  // Navegar la jerarquía en el punto seleccionado.
+  // Navigate the hierarchy at the selected point.
   const nav = $("div");
   Object.assign(nav.style, { display: "flex", gap: "6px" });
-  const btnUp = $("button", { textContent: "⬆ Padre", disabled: true });
-  const btnDown = $("button", { textContent: "⬇ Hijo", disabled: true });
-  btnUp.onclick = subir; btnDown.onclick = bajar;
+  const btnUp = $("button", { textContent: "Up (parent)", disabled: true });
+  const btnDown = $("button", { textContent: "Down (child)", disabled: true });
+  btnUp.onclick = goUp; btnDown.onclick = goDown;
   nav.append(btnUp, btnDown);
 
-  const coment = $("textarea", { placeholder: "Comentario para la IA…", rows: 3 });
-  const btnAdd = $("button", { textContent: "＋ Añadir anotación" });
-  const contador = $("div", { textContent: "0 anotaciones" });
-  Object.assign(contador.style, { fontSize: "12px", color: "#A9B4C7" });
-  const btnCopy = $("button", { textContent: "📋 Copiar todo para IA" });
+  const comment = $("textarea", { placeholder: "Comment for the AI...", rows: 3 });
+  const btnAdd = $("button", { textContent: "Add annotation" });
+  const counter = $("div", { textContent: "0 annotations" });
+  Object.assign(counter.style, { fontSize: "12px", color: "#A9B4C7" });
+  const btnCopy = $("button", { textContent: "Copy all for AI" });
 
   for (const b of [btnSel, btnAdd, btnCopy, btnUp, btnDown]) {
     Object.assign(b.style, { padding: "9px 12px", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "700", fontFamily: "inherit" });
@@ -160,55 +161,55 @@
   for (const b of [btnUp, btnDown]) { b.style.background = "#1B2236"; b.style.color = "#F5F7FA"; b.style.flex = "1"; }
   btnAdd.style.background = "#FFC20E"; btnAdd.style.color = "#0B0D14";
   btnCopy.style.background = "#25D366"; btnCopy.style.color = "#06281a";
-  Object.assign(coment.style, { width: "100%", boxSizing: "border-box", background: "#07090F", color: "#F5F7FA", border: "1px solid #3A4766", borderRadius: "8px", padding: "8px", font: "inherit", resize: "vertical" });
+  Object.assign(comment.style, { width: "100%", boxSizing: "border-box", background: "#07090F", color: "#F5F7FA", border: "1px solid #3A4766", borderRadius: "8px", padding: "8px", font: "inherit", resize: "vertical" });
 
-  panel.append(tit, btnSel, info, nav, coment, btnAdd, contador, btnCopy);
+  panel.append(title, btnSel, info, nav, comment, btnAdd, counter, btnCopy);
   document.body.appendChild(panel);
 
   btnSel.onclick = () => {
-    seleccionando = !seleccionando;
-    btnSel.textContent = seleccionando ? "✋ Cancelar (clic en un elemento)" : "🎯 Seleccionar elemento";
-    document.body.style.cursor = seleccionando ? "crosshair" : "";
-    if (!seleccionando) marca.style.display = "none";
+    selecting = !selecting;
+    btnSel.textContent = selecting ? "Cancel (click an element)" : "Select element";
+    document.body.style.cursor = selecting ? "crosshair" : "";
+    if (!selecting) marker.style.display = "none";
   };
 
   function markdown() {
-    return anotaciones.map((a, i) =>
-      "## Anotación " + (i + 1) + "\n" +
-      "**Comentario:** " + a.comentario + "\n" +
+    return annotations.map((a, i) =>
+      "## Annotation " + (i + 1) + "\n" +
+      "**Comment:** " + a.comment + "\n" +
       "**Selector:** `" + a.selector + "`\n" +
-      "**Elemento:** `" + a.tag + "` (" + a.w + "×" + a.h + ")\n" +
-      (a.captura ? "**Captura:** " + a.captura + "\n" : "") +
-      "**Estilos:** " + a.estilos + "\n\n" +
+      "**Element:** `" + a.tag + "` (" + a.w + "x" + a.h + ")\n" +
+      (a.screenshot ? "**Screenshot:** " + a.screenshot + "\n" : "") +
+      "**Styles:** " + a.styles + "\n\n" +
       "```html\n" + a.html + "\n```"
     ).join("\n\n---\n\n");
   }
 
   btnAdd.onclick = () => {
-    if (!elegido) { info.textContent = "Selecciona un elemento primero"; return; }
-    const c = coment.value.trim();
-    if (!c) { coment.focus(); return; }
-    const r = elegido.getBoundingClientRect();
+    if (!chosen) { info.textContent = "Select an element first"; return; }
+    const c = comment.value.trim();
+    if (!c) { comment.focus(); return; }
+    const r = chosen.getBoundingClientRect();
     const a = {
-      comentario: c, selector: cssPath(elegido), tag: desc(elegido),
+      comment: c, selector: cssPath(chosen), tag: desc(chosen),
       w: Math.round(r.width), h: Math.round(r.height),
-      estilos: estilos(elegido), html: (elegido.outerHTML || "").slice(0, 600), url: location.href,
+      styles: styles(chosen), html: (chosen.outerHTML || "").slice(0, 600), url: location.href,
       rect: { x: r.left + scrollX, y: r.top + scrollY, width: r.width, height: r.height },
     };
-    anotaciones.push(a);
-    contador.textContent = anotaciones.length + " anotacion" + (anotaciones.length === 1 ? "" : "es");
-    if (window.anotaEnviar) window.anotaEnviar(JSON.stringify(a));
-    coment.value = ""; pila = []; nivel = 0; elegido = null; marca.style.display = "none";
-    info.textContent = "Ningún elemento seleccionado"; btnUp.disabled = btnDown.disabled = true;
+    annotations.push(a);
+    counter.textContent = annotations.length + " annotation" + (annotations.length === 1 ? "" : "s");
+    if (window.sendAnnotation) window.sendAnnotation(JSON.stringify(a));
+    comment.value = ""; stack = []; level = 0; chosen = null; marker.style.display = "none";
+    info.textContent = "No element selected"; btnUp.disabled = btnDown.disabled = true;
   };
 
   btnCopy.onclick = async () => {
-    if (!anotaciones.length) { btnCopy.textContent = "Nada que copiar"; return; }
-    try { await navigator.clipboard.writeText(markdown()); btnCopy.textContent = "✓ Copiado"; }
-    catch { btnCopy.textContent = "Copia manual desde el terminal"; }
-    setTimeout(() => (btnCopy.textContent = "📋 Copiar todo para IA"), 1600);
+    if (!annotations.length) { btnCopy.textContent = "Nothing to copy"; return; }
+    try { await navigator.clipboard.writeText(markdown()); btnCopy.textContent = "Copied"; }
+    catch { btnCopy.textContent = "Copy manually from the terminal"; }
+    setTimeout(() => (btnCopy.textContent = "Copy all for AI"), 1600);
   };
 
-  window.__anota = { panel, anotaciones, markdown, resaltar };
-  console.log("[anota] overlay activo — clic en un elemento y usa ⬆/⬇ o flechas para navegar padres/hijos");
+  window.__anota = { panel, annotations, markdown, highlight };
+  console.log("[anota] overlay active, click an element and use Up/Down or arrow keys to navigate parents/children");
 })();

@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# launch-chrome.sh — arranca el Chrome de WINDOWS con el puerto CDP y verifica
-# que se alcanza DESDE WSL. Envoltorio de launch-chrome.ps1 para no salir del
-# terminal Linux.
+# launch-chrome.sh: starts WINDOWS' Chrome with the CDP port and verifies
+# that it is reachable FROM WSL. Wrapper around launch-chrome.ps1 so you
+# never have to leave the Linux terminal.
 #
-# Uso:  ./launch-chrome.sh [--clean] [--port N]
-#   --clean   perfil temporal aislado (sin tus logins) en vez del perfil real
+# Usage:  ./launch-chrome.sh [--clean] [--port N]
+#   --clean   isolated temporary profile (no logins) instead of the real one
 #
-# Requiere WSL en modo espejo (networkingMode=mirrored en C:\Users\<tu>\.wslconfig).
-# Sin modo espejo, el 127.0.0.1 de Linux NO es el de Windows y esto no conecta.
+# Requires WSL in mirrored mode (networkingMode=mirrored in C:\Users\<you>\.wslconfig).
+# Without mirrored mode, Linux's 127.0.0.1 is NOT Windows' and this will not connect.
 set -uo pipefail
 
 PORT=9222
@@ -16,23 +16,23 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --clean) PS_ARGS+=("-CleanProfile") ;;
     --port)  PORT="$2"; shift ;;
-    *) echo "Opción desconocida: $1" >&2; exit 2 ;;
+    *) echo "Unknown option: $1" >&2; exit 2 ;;
   esac
   shift
 done
 PS_ARGS+=("-Port" "$PORT")
 
-AQUI="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PS1_WIN="$(wslpath -w "$AQUI/launch-chrome.ps1")"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PS1_WIN="$(wslpath -w "$HERE/launch-chrome.ps1")"
 PS_EXE="$(command -v pwsh.exe || command -v powershell.exe)"
-[ -n "$PS_EXE" ] || { echo "No encuentro pwsh.exe ni powershell.exe" >&2; exit 1; }
+[ -n "$PS_EXE" ] || { echo "Cannot find pwsh.exe or powershell.exe" >&2; exit 1; }
 
-echo "Lanzando Chrome en Windows (puerto $PORT)…"
+echo "Launching Chrome on Windows (port $PORT)..."
 "$PS_EXE" -NoProfile -File "$PS1_WIN" "${PS_ARGS[@]}" | tr -d '\r'
 
-# El .ps1 ya comprueba el endpoint desde Windows; lo que importa aquí es que se
-# vea desde Linux, que es donde corren las herramientas de browser/.
-echo -n "Comprobando acceso desde WSL a 127.0.0.1:$PORT … "
+# The .ps1 already checks the endpoint from Windows; what matters here is
+# that it is reachable from Linux, which is where the browser/ tools run.
+echo -n "Checking access from WSL to 127.0.0.1:$PORT ... "
 for _ in $(seq 1 20); do
   if VER=$(curl -s --max-time 1 "http://127.0.0.1:$PORT/json/version" 2>/dev/null) && [ -n "$VER" ]; then
     echo "OK"
@@ -42,18 +42,18 @@ for _ in $(seq 1 20); do
   sleep 0.5
 done
 
-echo "FALLO"
+echo "FAILED"
 cat >&2 <<'EOF'
 
-Chrome arrancó en Windows pero WSL no llega a su 127.0.0.1. Casi siempre es que
-el modo espejo no está activo. Comprobar:
+Chrome started on Windows but WSL cannot reach its 127.0.0.1. This almost
+always means mirrored mode is not active. Check:
 
-  1. Que existe C:\Users\<tu>\.wslconfig con:
+  1. That C:\Users\<you>\.wslconfig exists with:
          [wsl2]
          networkingMode=mirrored
-  2. Que se aplicó: hace falta 'wsl --shutdown' desde PowerShell y reabrir WSL.
-  3. Verificar el modo:  ip route | grep default
-     - Sin salida (o gateway = tu router) -> modo espejo activo.
-     - Gateway tipo 172.x.x.1 -> sigues en NAT, el shutdown no se hizo.
+  2. That it was applied: you need to run 'wsl --shutdown' from PowerShell and reopen WSL.
+  3. Check the mode:  ip route | grep default
+     - No output (or gateway = your router) -> mirrored mode is active.
+     - Gateway like 172.x.x.1 -> you are still in NAT, the shutdown was not done.
 EOF
 exit 1

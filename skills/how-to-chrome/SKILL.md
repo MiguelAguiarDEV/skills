@@ -1,182 +1,188 @@
 ---
 name: how-to-chrome
-description: "Usar Google Chrome desde el terminal via Chrome DevTools Protocol (CDP), sin extension ni dependencias npm. Navegar, capturar (incl. pagina completa y por breakpoint), leer consola/DOM, rellenar formularios y hacer QA; exportar el diseno a PDF (to-pdf.mjs); anotar elementos de la web para pegar a una IA (anota.mjs); y agrupar pestanas en un grupo propio de Chrome (grupo.mjs). Usar siempre que haya que abrir/probar/auditar una web en el navegador, verificar un diseno, depurar con la consola, exportar capturas/PDF, anotar cambios, o gestionar pestanas."
+description: "Use Google Chrome from the terminal via the Chrome DevTools Protocol (CDP), no extension and no npm dependencies. Navigate, capture (incl. full page and per breakpoint), read console/DOM, fill forms and do QA; export the design to PDF (to-pdf.mjs); annotate page elements to paste into an AI (anota.mjs); and group tabs into a dedicated Chrome tab group (grupo.mjs). Use whenever you need to open/test/audit a website in the browser, verify a design, debug with the console, export screenshots/PDF, annotate changes, or manage tabs."
 ---
 
-# How to Chrome — controlar Chrome desde el terminal (CDP)
+# How to Chrome: control Chrome from the terminal (CDP)
 
-Controla **Google Chrome** desde el terminal con el **Chrome DevTools Protocol
-(CDP)**. Sin la extension `claude-in-chrome`, sin MCP, sin paquetes npm: Node 21+
-trae `WebSocket` y `fetch` nativos, asi que las herramientas son scripts de un
-solo archivo en `scripts/`.
+Control **Google Chrome** from the terminal with the **Chrome DevTools Protocol
+(CDP)**. No `claude-in-chrome` extension, no MCP, no npm packages: Node 21+
+ships native `WebSocket` and `fetch`, so the tools are single-file scripts in
+`scripts/`.
 
-## Como funciona (arquitectura)
+## How it works (architecture)
 
 ```
-terminal (Node)  ──WebSocket──►  Chrome (--remote-debugging-port=9222)
-   send(method, params) ────────►   Page.navigate, Page.captureScreenshot,
-   ◄─── result / eventos            Runtime.evaluate, Emulation.setDeviceMetricsOverride,
-                                     Extensions.loadUnpacked, Target.*, …
+terminal (Node)  --WebSocket-->  Chrome (--remote-debugging-port=9222)
+   send(method, params) ------->   Page.navigate, Page.captureScreenshot,
+   <--- result / events            Runtime.evaluate, Emulation.setDeviceMetricsOverride,
+                                    Extensions.loadUnpacked, Target.*, ...
 ```
 
-1. Chrome se arranca **una vez** con `--remote-debugging-port=9222` (el puerto
-   solo se activa al inicio; no se puede "enchufar" a un Chrome ya abierto).
-2. `http://127.0.0.1:9222/json` lista pestanas (targets) con su
-   `webSocketDebuggerUrl`; `/json/version` da el WS a nivel navegador.
-3. El script se conecta por WebSocket y manda comandos CDP; los eventos vuelven
-   por el mismo socket.
+1. Chrome is started **once** with `--remote-debugging-port=9222` (the port
+   only activates at startup; you cannot "plug into" a Chrome that is already open).
+2. `http://127.0.0.1:9222/json` lists tabs (targets) with their
+   `webSocketDebuggerUrl`; `/json/version` gives the browser-level WS endpoint.
+3. The script connects over WebSocket and sends CDP commands; events come back
+   over the same socket.
 
-## Requisitos y dependencias
+## Requirements and dependencies
 
-- **Google Chrome** (v111+; ver notas de version en `references/persistent-setup.md`).
-- **Node.js 21+** (`node --version`) — trae `fetch`/`WebSocket` nativos, cero `npm install`.
-- Si el agente corre en **WSL2 y Chrome en Windows**: `pwsh.exe` o `powershell.exe`
-  accesible desde WSL, y el modo de red `mirrored` de WSL2 (ver
-  `references/wsl2-networking.md` — **léelo antes** si esto aplica, es la causa
-  más común de que nada de esto conecte).
+- **Google Chrome** (v111+; see version notes in `references/persistent-setup.md`).
+- **Node.js 21+** (`node --version`), ships native `fetch`/`WebSocket`, zero `npm install`.
+- If the agent runs on **WSL2 and Chrome runs on Windows**: `pwsh.exe` or
+  `powershell.exe` reachable from WSL, and WSL2's `mirrored` networking mode
+  (see `references/wsl2-networking.md`, **read it first** if this applies, it
+  is the most common reason nothing connects).
 
-Ninguna otra dependencia: no hace falta MCP, no hace falta la extension oficial
-`claude-in-chrome` (no ejecutar ambas sobre el mismo Chrome a la vez).
+No other dependency: no MCP needed, no need for the official `claude-in-chrome`
+extension (do not run both against the same Chrome).
 
-## Instalacion
+## Installation
 
-1. Esta carpeta ya es autocontenida — cópiala tal cual a `.claude/skills/how-to-chrome/`
-   de tu proyecto, o instálala como plugin (ver README del repo).
-2. Arranca Chrome con el puerto de depuracion:
-
-   ```bash
-   pwsh -File scripts/launch-chrome.ps1          # perfil dedicado (tus logins)
-   pwsh -File scripts/launch-chrome.ps1 -CleanProfile   # perfil aislado (pruebas anonimas)
-   ```
-
-   Desde un terminal **WSL**, usa el envoltorio (comprueba ademas que el puerto
-   se ve desde Linux, que es donde corren los scripts):
+1. This folder is already self-contained. Copy it as-is into
+   `.claude/skills/how-to-chrome/` in your project, or install it as a plugin
+   (see the repo README).
+2. Start Chrome with the debug port:
 
    ```bash
-   scripts/launch-chrome.sh          # perfil dedicado
-   scripts/launch-chrome.sh --clean  # perfil aislado
+   pwsh -File scripts/launch-chrome.ps1          # dedicated profile (your logins)
+   pwsh -File scripts/launch-chrome.ps1 -CleanProfile   # isolated profile (anonymous tests)
    ```
-3. Verifica: `curl http://127.0.0.1:9222/json/version`.
 
-> **Por que un perfil dedicado y no el de siempre:** desde Chrome 136 el
-> navegador **ignora `--remote-debugging-port` si el perfil es el POR DEFECTO**.
-> El lanzador ya usa un perfil dedicado (`CDP-Profile`) — una carpeta nueva y
-> separada que **nunca toca, lee ni borra tu perfil real** (cookies, sesiones,
-> contrasenas e historial de tu Chrome de siempre quedan intactos). Si quieres
-> que Chrome arranque **siempre** con el puerto abierto (sin relanzarlo cada
-> sesion), ver la configuracion persistente en `references/persistent-setup.md`
-> — incluye la opcion que no toca ni un solo acceso directo tuyo.
+   From a **WSL** terminal, use the wrapper (it also checks that the port is
+   reachable from Linux, which is where the scripts run):
 
-## 1) `scripts/cdp.mjs` — control del navegador
+   ```bash
+   scripts/launch-chrome.sh          # dedicated profile
+   scripts/launch-chrome.sh --clean  # isolated profile
+   ```
+3. Verify: `curl http://127.0.0.1:9222/json/version`.
+
+> **Why a dedicated profile instead of your usual one:** since Chrome 136 the
+> browser **ignores `--remote-debugging-port` if the profile is the DEFAULT
+> one**. The launcher already uses a dedicated profile (`CDP-Profile`), a new
+> and separate folder that **never touches, reads, or deletes your real
+> profile** (cookies, sessions, passwords, and history from your everyday
+> Chrome stay untouched). If you want Chrome to **always** start with the port
+> open (without relaunching it every session), see the persistent setup in
+> `references/persistent-setup.md`, it includes an option that does not touch
+> a single one of your existing shortcuts.
+
+## 1) `scripts/cdp.mjs`: browser control
 
 ```bash
-node scripts/cdp.mjs <comando> [args]
+node scripts/cdp.mjs <command> [args]
 ```
 
-| Comando | Que hace |
+| Command | What it does |
 |--------|----------|
-| `tabs` | Lista pestanas con su `tabId` y URL (de TODAS las ventanas, sin distinguirlas) |
-| `ventanas` | Lista las **ventanas** del navegador, con sus pestanas, tamano, posicion y estado |
-| `nav <url> [tabId]` | Navega (crea pestana nueva si no pasas `tabId`) |
-| `shot <a.png> [--full] [--w N --h N] [--mobile] [tabId]` | Captura. `--full`=pagina completa; `--w/--h`=viewport; `--mobile`=touch+DPR |
-| `responsive <url> <dir>` | Capturas full-page en movil/tablet/laptop/desktop |
-| `text` / `html [tabId]` | Texto visible / HTML completo |
-| `eval "<js>" [tabId]` | Ejecuta JS y devuelve el resultado (soporta promesas) |
-| `click "<sel>"` / `type "<sel>" "<txt>" [tabId]` | Click / rellenar input (dispara input+change) |
-| `console [tabId]` | Vuelca consola, logs y excepciones 3s |
+| `tabs` | Lists tabs with their `tabId` and URL (from ALL windows, without distinguishing them) |
+| `windows` | Lists the browser's **windows**, with their tabs, size, position, and state |
+| `nav <url> [tabId]` | Navigates (creates a new tab if you do not pass `tabId`) |
+| `shot <a.png> [--full] [--w N --h N] [--mobile] [tabId]` | Captures. `--full` = full page; `--w/--h` = viewport; `--mobile` = touch+DPR |
+| `responsive <url> <dir>` | Full-page captures on mobile/tablet/laptop/desktop |
+| `text` / `html [tabId]` | Visible text / full HTML |
+| `eval "<js>" [tabId]` | Runs JS and returns the result (supports promises) |
+| `click "<sel>"` / `type "<sel>" "<txt>" [tabId]` | Click / fill input (fires input+change) |
+| `console [tabId]` | Dumps console, logs, and exceptions for 3s |
 
-`tabId` = el `id` que muestra `tabs`. Sin `tabId`, usa la primera pestana.
+`tabId` is the `id` shown by `tabs`. Without `tabId`, it uses the first tab.
 
-**Flujos tipicos:**
-- *Dev loop:* `nav localhost:4321` → `shot dev.png --full` → `console` → corregir → repetir.
-- *QA responsive:* `responsive http://localhost:4321 qa/home` → revisar overflow, breakpoints, tap targets…
-- *QA funcional:* `nav /contacto` → `type "#email" "malo"` → `click "button[type=submit]"` → `shot`.
-- *Depurar DOM:* `eval "getComputedStyle(document.querySelector('.hero')).padding"`.
+**Typical flows:**
+- *Dev loop:* `nav localhost:4321` -> `shot dev.png --full` -> `console` -> fix -> repeat.
+- *Responsive QA:* `responsive http://localhost:4321 qa/home`, then review overflow, breakpoints, tap targets...
+- *Functional QA:* `nav /contact` -> `type "#email" "bad"` -> `click "button[type=submit]"` -> `shot`.
+- *DOM debugging:* `eval "getComputedStyle(document.querySelector('.hero')).padding"`.
 
-## 2) `scripts/to-pdf.mjs` — exportar a PDF
+## 2) `scripts/to-pdf.mjs`: export to PDF
 
-Captura la web completa al viewport pedido y la incrusta en un PDF de una
-pagina (fiel al pixel; no reflowea como `printToPDF`).
-
-```bash
-node scripts/to-pdf.mjs <url> <salida.pdf> --w 1440           # desktop
-node scripts/to-pdf.mjs <url> <salida.pdf> --w 390 --mobile   # movil
-```
-
-## 3) `scripts/anota.mjs` — anotar elementos para IA
-
-Inyecta un panel en la web (por CDP): seleccionas elementos, escribes un
-comentario, y vuelca un `.md` (selector CSS, HTML, estilos y **captura del
-elemento**) listo para pegar a cualquier IA. Tambien copia al portapapeles.
+Captures the full page at the requested viewport and embeds it in a
+single-page PDF (pixel-accurate; it does not reflow like `printToPDF`).
 
 ```bash
-node scripts/anota.mjs [url] --out anotaciones.md
-# deja el proceso vivo: cada "Anadir" escribe al .md. Ctrl+C para terminar.
+node scripts/to-pdf.mjs <url> <output.pdf> --w 1440           # desktop
+node scripts/to-pdf.mjs <url> <output.pdf> --w 390 --mobile   # mobile
 ```
-En el navegador: **🎯 Seleccionar** → clic en un elemento → **⬆ Padre / ⬇ Hijo**
-(o flechas) para navegar la jerarquia en ese punto (util para padres cubiertos
-por sus hijos) → comentario → **＋ Anadir**. El recuadro amarillo persiste al scroll.
 
-## 4) `scripts/grupo.mjs` — grupos de pestanas propios
+## 3) `scripts/anota.mjs`: annotate elements for AI
 
-CDP no tiene comando de tab groups, pero **`Extensions.loadUnpacked`** permite
-cargar una extension minima **en caliente** (sin relanzar Chrome).
-`grupo.mjs` la carga y ejecuta `chrome.tabs.group` en su service worker,
-metiendo pestanas en un grupo "Claude" para no mezclarlas con las tuyas.
+Injects a panel into the page (via CDP): you select elements, write a
+comment, and it writes a `.md` (CSS selector, HTML, styles, and a
+**screenshot of the element**) ready to paste into any AI. It also copies to
+the clipboard.
 
 ```bash
-node scripts/grupo.mjs abrir <url> [url2 ...]   # abre en el grupo "Claude"
-node scripts/grupo.mjs estado                   # lista grupos y pestanas
+node scripts/anota.mjs [url] --out annotations.md
+# keeps the process alive: every "Add annotation" writes to the .md file. Ctrl+C to stop.
 ```
-La extension esta en `scripts/ext-grupos/` (solo permisos `tabs` + `tabGroups`).
+In the browser: **Select element** -> click an element -> **Up (parent) /
+Down (child)** (or arrow keys) to navigate the hierarchy at that point
+(useful for parents covered by their children) -> comment -> **Add
+annotation**. The yellow box stays put while scrolling.
 
-## Notas tecnicas (leer antes de tocar la captura)
+## 4) `scripts/grupo.mjs`: dedicated tab groups
 
-- **Ancho de captura full-page:** usa el **viewport emulado**, NO `cssContentSize.width`.
-  Contenido clippeado horizontalmente (un marquee con `overflow-x:clip`) infla
-  `cssContentSize` y mete franja vacia a la derecha.
-- **Limite de textura (~16384px):** una pagina muy alta a DPR>1 se **repite**
-  (Chrome no falla, duplica). Las capturas full-page van a **DPR 1** y, si aun
-  superan el limite, se reducen con `clip.scale`.
-- **Lazy-load en full-page:** un screenshot no dispara `loading="lazy"` fuera
-  del viewport → salen en blanco. Antes de capturar: forzar `eager` + barrido
-  de scroll + esperar a que carguen (acotado; **nunca `img.decode()`**, puede colgar).
-- **Resaltado que persiste al scroll:** `position:absolute` con coords de pagina
-  (`rect + scrollX/scrollY`), no `fixed` con coords de viewport.
-- **`elementsFromPoint`** solo ve el viewport: para seleccionar un elemento hay
-  que tenerlo en pantalla.
-- **Emulacion:** `setDeviceMetricsOverride` funciona; `Page.printToPDF` la
-  ignora (usa su propio `paperWidth`), por eso `to-pdf` captura por screenshot
-  en vez de `printToPDF`.
-- **Nunca preguntar al SO por el estado del navegador; preguntarselo al
-  navegador.** Contar ventanas por procesos del sistema es enganoso (ver
-  `references/troubleshooting.md`); lo correcto es agrupar los targets CDP por
-  `windowId` de `Browser.getWindowForTarget` — es lo que hace `cdp.mjs ventanas`.
+CDP has no tab groups command, but **`Extensions.loadUnpacked`** lets you
+load a minimal extension **on the fly** (without relaunching Chrome).
+`grupo.mjs` loads it and runs `chrome.tabs.group` in its service worker,
+putting tabs into a "Claude" group so they do not get mixed with yours.
 
-Mas gotchas y lecciones aprendidas en uso real: `references/troubleshooting.md`.
+```bash
+node scripts/grupo.mjs open <url> [url2 ...]   # opens tabs in the "Claude" group
+node scripts/grupo.mjs status                  # lists groups and tabs
+```
+The extension lives in `scripts/ext-grupos/` (only `tabs` + `tabGroups` permissions).
 
-## Seguridad
+## Technical notes (read before touching capture logic)
 
-- Con `--remote-debugging-port` activo, cualquier proceso local puede
-  controlar ese Chrome. Usalo solo mientras trabajas; al cerrar Chrome el
-  puerto desaparece (salvo que hayas aplicado la configuracion persistente).
-- Con perfil real, capturas/DOM pueden incluir datos de sesiones logueadas:
-  revisa antes de compartir.
-- Es control directo por CDP, no la extension oficial `claude-in-chrome` (no
-  correr ambas sobre el mismo Chrome).
+- **Full-page capture width:** use the **emulated viewport**, NOT
+  `cssContentSize.width`. Content clipped horizontally (a marquee with
+  `overflow-x:clip`) inflates `cssContentSize` and adds an empty strip on the right.
+- **Texture limit (~16384px):** a very tall page at DPR>1 gets **duplicated**
+  (Chrome does not fail, it repeats content). Full-page captures use **DPR 1**
+  and, if they still exceed the limit, get scaled down with `clip.scale`.
+- **Lazy-load on full-page:** a screenshot does not trigger `loading="lazy"`
+  outside the viewport, so images come out blank. Before capturing: force
+  `eager` + a scroll sweep + wait for them to load (bounded; **never
+  `img.decode()`**, it can hang).
+- **Highlight that survives scrolling:** `position:absolute` with page
+  coordinates (`rect + scrollX/scrollY`), not `fixed` with viewport coordinates.
+- **`elementsFromPoint`** only sees the viewport: to select an element it must
+  be on screen.
+- **Emulation:** `setDeviceMetricsOverride` works; `Page.printToPDF` ignores
+  it (it uses its own `paperWidth`), which is why `to-pdf` captures via
+  screenshot instead of `printToPDF`.
+- **Never ask the OS for the browser's state; ask the browser.** Counting
+  windows via OS processes is misleading (see `references/troubleshooting.md`);
+  the right way is to group CDP targets by the `windowId` returned by
+  `Browser.getWindowForTarget`, which is exactly what `cdp.mjs windows` does.
 
-## Troubleshooting rapido
+More gotchas and lessons learned from real use: `references/troubleshooting.md`.
 
-| Sintoma | Causa / Fix |
+## Security
+
+- With `--remote-debugging-port` active, any local process can control that
+  Chrome instance. Only use it while you are working; the port disappears
+  when you close Chrome (unless you applied the persistent setup).
+- With your real profile, screenshots/DOM may include data from logged-in
+  sessions: review before sharing.
+- This is direct CDP control, not the official `claude-in-chrome` extension
+  (do not run both against the same Chrome).
+
+## Quick troubleshooting
+
+| Symptom | Cause / Fix |
 |---------|-------------|
-| `ECONNREFUSED 127.0.0.1:9222` | Chrome sin el flag → `scripts/launch-chrome.ps1`, o abrirlo por un acceso directo ya configurado |
-| Chrome arranca pero 9222 no responde (ni desde Windows) | Perfil POR DEFECTO: Chrome 136+ ignora `--remote-debugging-port` ahi. Usar perfil dedicado — ver `references/persistent-setup.md` |
-| `ECONNREFUSED` desde WSL y Chrome SI arrancado | WSL en modo NAT: el loopback no es compartido — ver `references/wsl2-networking.md` |
-| `nav` no cambia la pestana que quiero | Sin `tabId` crea una nueva; pasa el `tabId` de `tabs` |
-| Puerto en uso (`EADDRINUSE`) | Otro Chrome usa 9222; cierra y relanza, o `-Port` distinto |
-| Captura mas ancha de lo esperado | Bug conocido de ancho full-page → ya se fuerza el viewport emulado en `cdp.mjs` |
-| Imagenes en blanco en la captura | Lazy-load; `cdp.mjs` ya hace el precargado por scroll |
-| `grupo.mjs` no encuentra el service worker | La extension tardo en registrarse; reintenta (el script ya espera) |
-| Login/CAPTCHA bloquea | Resuelvelo a mano en la ventana visible y reanuda |
+| `ECONNREFUSED 127.0.0.1:9222` | Chrome without the flag, use `scripts/launch-chrome.ps1`, or open it via an already configured shortcut |
+| Chrome starts but 9222 does not respond (not even from Windows) | DEFAULT profile: Chrome 136+ ignores `--remote-debugging-port` there. Use the dedicated profile, see `references/persistent-setup.md` |
+| `ECONNREFUSED` from WSL while Chrome DID start | WSL in NAT mode: the loopback is not shared, see `references/wsl2-networking.md` |
+| `nav` does not switch to the tab I want | Without `tabId` it creates a new one; pass the `tabId` from `tabs` |
+| Port already in use (`EADDRINUSE`) | Another Chrome is using 9222; close it and relaunch, or use a different `-Port` |
+| Capture wider than expected | Known full-page width bug, already worked around by forcing the emulated viewport in `cdp.mjs` |
+| Blank images in the capture | Lazy-load; `cdp.mjs` already does the scroll preload |
+| `grupo.mjs` cannot find the service worker | The extension took a moment to register; retry (the script already waits) |
+| Login/CAPTCHA blocks progress | Solve it by hand in the visible window and resume |
 
-Tabla ampliada, con causas raiz y casos historicos reales: `references/troubleshooting.md`.
+Expanded table, with root causes and real historical cases:
+`references/troubleshooting.md`.
