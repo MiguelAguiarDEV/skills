@@ -1,0 +1,21 @@
+{
+  "name": "miguelaguiardev-skills",
+  "owner": {
+    "name": "Miguel Alejandro Santiesteban Aguiar"
+  },
+  "metadata": {
+    "description": "Skills personales para Claude Code",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "how-to-chrome",
+      "description": "Controlar Google Chrome desde el terminal via Chrome DevTools Protocol (CDP): navegar, capturar, hacer QA responsive, exportar a PDF, anotar elementos para IA y agrupar pestanas.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/how-to-chrome"
+      ]
+    }
+  ]
+}
