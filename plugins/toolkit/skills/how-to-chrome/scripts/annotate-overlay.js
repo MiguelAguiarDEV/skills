@@ -1,13 +1,16 @@
 // Annotation overlay: injected into the page. Lets you select elements with
 // the mouse (including parents covered by their children, navigating the
-// stack with Up/Down or arrow keys), write a comment on them, and sends each
-// annotation to the terminal via window.sendAnnotation (CDP binding). Also
-// copies everything to the clipboard.
+// stack with Up/Down or arrow keys), write a comment on them, see the list of
+// annotations made so far, click one to edit it, and sends each add/update to
+// the terminal via window.sendAnnotation (CDP binding). Also copies
+// everything to the clipboard.
 (() => {
   if (window.__anota) { window.__anota.panel.style.display = "flex"; return; }
 
   const $ = (t, p = {}) => Object.assign(document.createElement(t), p);
   const annotations = [];
+  let nextId = 1;
+  let editingId = null;
 
   const desc = (el) => {
     if (!el || !el.nodeName) return "?";
@@ -148,22 +151,32 @@
   btnUp.onclick = goUp; btnDown.onclick = goDown;
   nav.append(btnUp, btnDown);
 
+  // List of annotations made so far. Click a row to load it back for editing.
+  const list = $("div");
+  Object.assign(list.style, {
+    display: "none", flexDirection: "column", gap: "4px",
+    maxHeight: "110px", overflowY: "auto", fontSize: "12px",
+  });
+
   const comment = $("textarea", { placeholder: "Comment for the AI...", rows: 3 });
   const btnAdd = $("button", { textContent: "Add annotation" });
+  const btnCancelEdit = $("button", { textContent: "Cancel edit" });
+  btnCancelEdit.style.display = "none";
   const counter = $("div", { textContent: "0 annotations" });
   Object.assign(counter.style, { fontSize: "12px", color: "#A9B4C7" });
   const btnCopy = $("button", { textContent: "Copy all for AI" });
 
-  for (const b of [btnSel, btnAdd, btnCopy, btnUp, btnDown]) {
+  for (const b of [btnSel, btnAdd, btnCancelEdit, btnCopy, btnUp, btnDown]) {
     Object.assign(b.style, { padding: "9px 12px", borderRadius: "8px", border: "none", cursor: "pointer", fontWeight: "700", fontFamily: "inherit" });
   }
   btnSel.style.background = "#1B2236"; btnSel.style.color = "#F5F7FA";
   for (const b of [btnUp, btnDown]) { b.style.background = "#1B2236"; b.style.color = "#F5F7FA"; b.style.flex = "1"; }
   btnAdd.style.background = "#FFC20E"; btnAdd.style.color = "#0B0D14";
+  btnCancelEdit.style.background = "#1B2236"; btnCancelEdit.style.color = "#F5F7FA";
   btnCopy.style.background = "#25D366"; btnCopy.style.color = "#06281a";
   Object.assign(comment.style, { width: "100%", boxSizing: "border-box", background: "#07090F", color: "#F5F7FA", border: "1px solid #3A4766", borderRadius: "8px", padding: "8px", font: "inherit", resize: "vertical" });
 
-  panel.append(title, btnSel, info, nav, comment, btnAdd, counter, btnCopy);
+  panel.append(title, btnSel, info, nav, list, comment, btnAdd, btnCancelEdit, counter, btnCopy);
   document.body.appendChild(panel);
 
   btnSel.onclick = () => {
@@ -173,9 +186,53 @@
     if (!selecting) marker.style.display = "none";
   };
 
+  function renderList() {
+    list.style.display = annotations.length ? "flex" : "none";
+    list.innerHTML = "";
+    for (const a of annotations) {
+      const row = $("div", { textContent: `#${a.id} [${a.tag}] ${a.comment.slice(0, 40)}` });
+      Object.assign(row.style, {
+        cursor: "pointer", padding: "4px 6px", borderRadius: "6px",
+        background: a.id === editingId ? "#2A3350" : "#161B2C",
+        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+      });
+      row.onclick = () => startEdit(a.id);
+      list.appendChild(row);
+    }
+  }
+
+  function startEdit(id) {
+    const a = annotations.find((x) => x.id === id);
+    if (!a) return;
+    editingId = id;
+    comment.value = a.comment;
+    comment.focus();
+    btnAdd.textContent = `Update annotation #${id}`;
+    btnCancelEdit.style.display = "";
+    // Best-effort: re-highlight the original element if its selector still
+    // matches something on the page (harmless if not).
+    try {
+      const el = document.querySelector(a.selector);
+      if (el) { chosen = el; stack = [el]; level = 0; highlight(el); }
+    } catch {}
+    renderList();
+  }
+
+  function stopEdit() {
+    editingId = null;
+    btnAdd.textContent = "Add annotation";
+    btnCancelEdit.style.display = "none";
+    renderList();
+  }
+
+  btnCancelEdit.onclick = () => {
+    comment.value = "";
+    stopEdit();
+  };
+
   function markdown() {
-    return annotations.map((a, i) =>
-      "## Annotation " + (i + 1) + "\n" +
+    return annotations.map((a) =>
+      "## Annotation " + a.id + "\n" +
       "**Comment:** " + a.comment + "\n" +
       "**Selector:** `" + a.selector + "`\n" +
       "**Element:** `" + a.tag + "` (" + a.w + "x" + a.h + ")\n" +
@@ -186,21 +243,44 @@
   }
 
   btnAdd.onclick = () => {
-    if (!chosen) { info.textContent = "Select an element first"; return; }
     const c = comment.value.trim();
     if (!c) { comment.focus(); return; }
-    const r = chosen.getBoundingClientRect();
-    const a = {
-      comment: c, selector: cssPath(chosen), tag: desc(chosen),
-      w: Math.round(r.width), h: Math.round(r.height),
-      styles: styles(chosen), html: (chosen.outerHTML || "").slice(0, 600), url: location.href,
-      rect: { x: r.left + scrollX, y: r.top + scrollY, width: r.width, height: r.height },
-    };
-    annotations.push(a);
-    counter.textContent = annotations.length + " annotation" + (annotations.length === 1 ? "" : "s");
-    if (window.sendAnnotation) window.sendAnnotation(JSON.stringify(a));
+
+    if (editingId !== null) {
+      const a = annotations.find((x) => x.id === editingId);
+      if (!a) { stopEdit(); return; }
+      a.comment = c;
+      // If a (possibly different) element was picked while editing, refresh
+      // the element-derived fields too; otherwise only the comment changes.
+      if (chosen) {
+        const r = chosen.getBoundingClientRect();
+        Object.assign(a, {
+          selector: cssPath(chosen), tag: desc(chosen),
+          w: Math.round(r.width), h: Math.round(r.height),
+          styles: styles(chosen), html: (chosen.outerHTML || "").slice(0, 600), url: location.href,
+          rect: { x: r.left + scrollX, y: r.top + scrollY, width: r.width, height: r.height },
+        });
+      }
+      if (window.sendAnnotation) window.sendAnnotation(JSON.stringify({ ...a, action: "update" }));
+      stopEdit();
+    } else {
+      if (!chosen) { info.textContent = "Select an element first"; return; }
+      const r = chosen.getBoundingClientRect();
+      const a = {
+        id: nextId++,
+        comment: c, selector: cssPath(chosen), tag: desc(chosen),
+        w: Math.round(r.width), h: Math.round(r.height),
+        styles: styles(chosen), html: (chosen.outerHTML || "").slice(0, 600), url: location.href,
+        rect: { x: r.left + scrollX, y: r.top + scrollY, width: r.width, height: r.height },
+      };
+      annotations.push(a);
+      if (window.sendAnnotation) window.sendAnnotation(JSON.stringify({ ...a, action: "add" }));
+    }
+
     comment.value = ""; stack = []; level = 0; chosen = null; marker.style.display = "none";
     info.textContent = "No element selected"; btnUp.disabled = btnDown.disabled = true;
+    counter.textContent = annotations.length + " annotation" + (annotations.length === 1 ? "" : "s");
+    renderList();
   };
 
   btnCopy.onclick = async () => {
@@ -211,5 +291,5 @@
   };
 
   window.__anota = { panel, annotations, markdown, highlight };
-  console.log("[anota] overlay active, click an element and use Up/Down or arrow keys to navigate parents/children");
+  console.log("[anota] overlay active, click an element and use Up/Down or arrow keys to navigate parents/children. Click a row in the list to edit it.");
 })();

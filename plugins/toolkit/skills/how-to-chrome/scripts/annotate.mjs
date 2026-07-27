@@ -1,18 +1,18 @@
 // annotate.mjs: annotate elements on a page (browser + terminal, no editor).
 // Injects an overlay into the Chrome tab (via CDP). You select elements,
-// write a comment on them, and each annotation gets written to a .md file
-// (with selector, HTML, styles, and a screenshot of the element) ready to
-// paste into any AI.
+// write a comment on them, see the list of annotations made so far, and can
+// click one to edit it. Every add/update rewrites a .md file (with selector,
+// HTML, styles, and a screenshot of the element) ready to paste into any AI.
 //
 // Requires Chrome with --remote-debugging-port=9222 (use launch-chrome.ps1).
 //
 // Usage:
 //   node annotate.mjs [url] [--out annotations.md] [--tab <tabId>]
 //   - If you pass a url, it navigates there; otherwise it uses the active tab.
-//   - Keeps the process running: every "Add annotation" in the overlay writes to the .md file.
+//   - Keeps the process running: every add/update in the overlay rewrites the .md file.
 //   - Ctrl+C to stop.
 
-import { readFile, writeFile, appendFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 
 const HOST = process.env.CDP_HOST || "127.0.0.1:9222";
@@ -54,6 +54,24 @@ function connect(wsUrl) {
   });
 }
 
+// Renders the full .md from the current set of annotations, in the order
+// they were first added (a Map preserves insertion order; updating an
+// existing id in place does not move it).
+function render(header, seen) {
+  let out = header;
+  for (const a of seen.values()) {
+    out +=
+      `## Annotation ${a.id}\n` +
+      `**Comment:** ${a.comment}\n` +
+      `**Selector:** \`${a.selector}\`\n` +
+      `**Element:** \`${a.tag}\` (${a.w}x${a.h})\n` +
+      (a.screenshot ? `**Screenshot:** ${a.screenshot}\n` : "") +
+      `**Styles:** ${a.styles}\n\n` +
+      "```html\n" + a.html + "\n```\n\n---\n\n";
+  }
+  return out;
+}
+
 async function main() {
   const o = args();
   const overlaySrc = await readFile(new URL("./annotate-overlay.js", import.meta.url), "utf8");
@@ -76,15 +94,17 @@ async function main() {
   const outPath = resolve(process.cwd(), o.out);
   const shotsDir = resolve(dirname(outPath), "annotation-screenshots");
   await mkdir(shotsDir, { recursive: true });
-  await writeFile(outPath, `# Annotations: ${target.url || o.url}\n\n`, "utf8");
+  const header = `# Annotations: ${target.url || o.url}\n\n`;
+  const seen = new Map(); // id -> annotation, rewritten to outPath on every add/update
+  await writeFile(outPath, render(header, seen), "utf8");
 
-  let n = 0;
   cli.on(async (m) => {
     if (m.method !== "Runtime.bindingCalled" || m.params.name !== "sendAnnotation") return;
-    n++;
     let a; try { a = JSON.parse(m.params.payload); } catch { return; }
 
-    // Screenshot of the element (clip in page coordinates).
+    // Screenshot of the element (clip in page coordinates). Re-captured on
+    // every save (including edits) since it is cheap and keeps the file in
+    // sync with whatever rect the annotation currently points to.
     let screenshotRel = "";
     try {
       const r = a.rect;
@@ -93,22 +113,16 @@ async function main() {
           format: "png", captureBeyondViewport: true,
           clip: { x: Math.max(0, r.x), y: Math.max(0, r.y), width: Math.ceil(r.width), height: Math.ceil(r.height), scale: 1 },
         });
-        const file = `annotation-${String(n).padStart(2, "0")}.png`;
+        const file = `annotation-${String(a.id).padStart(2, "0")}.png`;
         await writeFile(resolve(shotsDir, file), Buffer.from(data, "base64"));
         screenshotRel = `annotation-screenshots/${file}`;
       }
     } catch {}
 
-    const block =
-      `## Annotation ${n}\n` +
-      `**Comment:** ${a.comment}\n` +
-      `**Selector:** \`${a.selector}\`\n` +
-      `**Element:** \`${a.tag}\` (${a.w}x${a.h})\n` +
-      (screenshotRel ? `**Screenshot:** ${screenshotRel}\n` : "") +
-      `**Styles:** ${a.styles}\n\n` +
-      "```html\n" + a.html + "\n```\n\n---\n\n";
-    await appendFile(outPath, block, "utf8");
-    console.log(`Annotation ${n}: "${a.comment.slice(0, 50)}" -> ${a.selector}${screenshotRel ? " (+screenshot)" : ""}`);
+    seen.set(a.id, { ...a, screenshot: screenshotRel });
+    await writeFile(outPath, render(header, seen), "utf8");
+    const verb = a.action === "update" ? "Updated" : "Added";
+    console.log(`${verb} annotation #${a.id}: "${a.comment.slice(0, 50)}" -> ${a.selector}${screenshotRel ? " (+screenshot)" : ""}`);
   });
 
   // Inject the overlay (and reinject it on every navigation of the tab).
@@ -118,7 +132,7 @@ async function main() {
 
   console.log(`Overlay injected on: ${target.url || o.url}`);
   console.log(`Annotating -> ${outPath}  (screenshots in ${shotsDir})`);
-  console.log("Select elements and comment in the browser panel. Ctrl+C to stop.\n");
+  console.log("Select elements and comment in the browser panel. Click a row in the list to edit it. Ctrl+C to stop.\n");
   // Keep the process alive.
   await new Promise(() => {});
 }

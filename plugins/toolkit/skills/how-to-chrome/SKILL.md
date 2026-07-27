@@ -124,12 +124,19 @@ the clipboard.
 
 ```bash
 node scripts/annotate.mjs [url] --out annotations.md
-# keeps the process alive: every "Add annotation" writes to the .md file. Ctrl+C to stop.
+# keeps the process alive: every add/update rewrites the .md file. Ctrl+C to stop.
 ```
 In the browser: **Select element** -> click an element -> **Up (parent) /
 Down (child)** (or arrow keys) to navigate the hierarchy at that point
 (useful for parents covered by their children) -> comment -> **Add
 annotation**. The yellow box stays put while scrolling.
+
+The panel shows the running **list of annotations made so far** (`#id [tag]
+comment...`). Click a row to load it back into the form for editing: change
+the comment and/or pick a different element, then the button becomes
+**Update annotation #id**. Editing overwrites that entry in place (same
+position in the `.md`, same screenshot file) instead of adding a new one;
+**Cancel edit** discards the change and goes back to adding new annotations.
 
 ## 4) `scripts/group.mjs`: dedicated tab groups
 
