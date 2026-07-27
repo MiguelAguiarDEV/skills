@@ -38,6 +38,12 @@ Una vez instalado, basta con mencionar la tarea ("abre esta web en Chrome y
 haz una captura", "grill me este plan") para que Claude cargue la skill
 correspondiente sola.
 
+> **Si ya tenias este marketplace anadido de antes** (por ejemplo de cuando
+> `how-to-chrome` y `grill-me` eran plugins separados) y `install` te dice
+> `Plugin "toolkit" not found`: `marketplace add` no refresca el catalogo si
+> ya estaba en disco. Corre `/plugin marketplace update MiguelAguiarDEV/skills`
+> primero y reintenta el `install`.
+
 ## Anadir una skill nueva a `toolkit`
 
 ```bash
