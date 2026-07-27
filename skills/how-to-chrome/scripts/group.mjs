@@ -1,4 +1,4 @@
-// grupo.mjs: creates/uses a dedicated Chrome tab GROUP ("Claude") without
+// group.mjs: creates/uses a dedicated Chrome tab GROUP ("Claude") without
 // relaunching the browser. Loads a minimal extension via CDP
 // (Extensions.loadUnpacked) and runs chrome.tabs.group in its service
 // worker. No relaunch, no npm.
@@ -6,9 +6,9 @@
 // Requires Chrome with --remote-debugging-port=9222.
 //
 // Usage:
-//   node grupo.mjs open <url> [url2 ...]      -> opens those urls in the "Claude" group
-//   node grupo.mjs status                     -> lists the groups and their tabs
-//   node grupo.mjs [--title Claude] [--color yellow]
+//   node group.mjs open <url> [url2 ...]      -> opens those urls in the "Claude" group
+//   node group.mjs status                     -> lists the groups and their tabs
+//   node group.mjs [--title Claude] [--color yellow]
 //
 // Valid colors: grey blue red yellow green pink purple cyan orange
 
@@ -30,7 +30,7 @@ function pathForChrome(p) {
     return p; // outside WSL there is no wslpath: the path is already native
   }
 }
-const EXT_DIR = pathForChrome(resolve(dirname(fileURLToPath(import.meta.url)), "ext-grupos"));
+const EXT_DIR = pathForChrome(resolve(dirname(fileURLToPath(import.meta.url)), "ext-group"));
 
 function parse() {
   const a = process.argv.slice(2);
@@ -108,7 +108,7 @@ async function main() {
   };
 
   if (o.cmd === "open") {
-    if (!o.urls.length) throw new Error("Give me at least one url: node grupo.mjs open <url>");
+    if (!o.urls.length) throw new Error("Give me at least one url: node group.mjs open <url>");
     const r = await evalSW(`openInGroup(${JSON.stringify(o.urls)}, ${JSON.stringify(o.title)}, ${JSON.stringify(o.color)})`);
     console.log(`Group "${o.title}" (${o.color}) created with ${r.tabIds.length} tab(s). groupId=${r.groupId}`);
   }

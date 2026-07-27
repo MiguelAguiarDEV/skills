@@ -5,12 +5,12 @@ detail and the real-world findings that do not fit in the quick reference.
 
 ## `Extensions.loadUnpacked` fails with "File path cannot be resolved."
 
-Happens when `grupo.mjs` runs on **WSL** but Chrome is the **Windows**
-binary: if you give it the Linux path for `scripts/ext-grupos/`
+Happens when `group.mjs` runs on **WSL** but Chrome is the **Windows**
+binary: if you give it the Linux path for `scripts/ext-group/`
 (`/mnt/c/...` or similar), Chrome cannot resolve it, it needs a Windows path
 (`C:\...`).
 
-**Fix already applied in the script:** `grupo.mjs` translates the path with
+**Fix already applied in the script:** `group.mjs` translates the path with
 `wslpath -w` before passing it to `Extensions.loadUnpacked` (function
 `pathForChrome()`). Outside WSL, `wslpath` does not exist and the script uses
 the path as-is.

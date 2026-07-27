@@ -1,6 +1,6 @@
 ---
 name: how-to-chrome
-description: "Use Google Chrome from the terminal via the Chrome DevTools Protocol (CDP), no extension and no npm dependencies. Navigate, capture (incl. full page and per breakpoint), read console/DOM, fill forms and do QA; export the design to PDF (to-pdf.mjs); annotate page elements to paste into an AI (anota.mjs); and group tabs into a dedicated Chrome tab group (grupo.mjs). Use whenever you need to open/test/audit a website in the browser, verify a design, debug with the console, export screenshots/PDF, annotate changes, or manage tabs."
+description: "Use Google Chrome from the terminal via the Chrome DevTools Protocol (CDP), no extension and no npm dependencies. Navigate, capture (incl. full page and per breakpoint), read console/DOM, fill forms and do QA; export the design to PDF (to-pdf.mjs); annotate page elements to paste into an AI (annotate.mjs); and group tabs into a dedicated Chrome tab group (group.mjs). Use whenever you need to open/test/audit a website in the browser, verify a design, debug with the console, export screenshots/PDF, annotate changes, or manage tabs."
 ---
 
 # How to Chrome: control Chrome from the terminal (CDP)
@@ -105,7 +105,7 @@ node scripts/to-pdf.mjs <url> <output.pdf> --w 1440           # desktop
 node scripts/to-pdf.mjs <url> <output.pdf> --w 390 --mobile   # mobile
 ```
 
-## 3) `scripts/anota.mjs`: annotate elements for AI
+## 3) `scripts/annotate.mjs`: annotate elements for AI
 
 Injects a panel into the page (via CDP): you select elements, write a
 comment, and it writes a `.md` (CSS selector, HTML, styles, and a
@@ -113,7 +113,7 @@ comment, and it writes a `.md` (CSS selector, HTML, styles, and a
 the clipboard.
 
 ```bash
-node scripts/anota.mjs [url] --out annotations.md
+node scripts/annotate.mjs [url] --out annotations.md
 # keeps the process alive: every "Add annotation" writes to the .md file. Ctrl+C to stop.
 ```
 In the browser: **Select element** -> click an element -> **Up (parent) /
@@ -121,18 +121,18 @@ Down (child)** (or arrow keys) to navigate the hierarchy at that point
 (useful for parents covered by their children) -> comment -> **Add
 annotation**. The yellow box stays put while scrolling.
 
-## 4) `scripts/grupo.mjs`: dedicated tab groups
+## 4) `scripts/group.mjs`: dedicated tab groups
 
 CDP has no tab groups command, but **`Extensions.loadUnpacked`** lets you
 load a minimal extension **on the fly** (without relaunching Chrome).
-`grupo.mjs` loads it and runs `chrome.tabs.group` in its service worker,
+`group.mjs` loads it and runs `chrome.tabs.group` in its service worker,
 putting tabs into a "Claude" group so they do not get mixed with yours.
 
 ```bash
-node scripts/grupo.mjs open <url> [url2 ...]   # opens tabs in the "Claude" group
-node scripts/grupo.mjs status                  # lists groups and tabs
+node scripts/group.mjs open <url> [url2 ...]   # opens tabs in the "Claude" group
+node scripts/group.mjs status                  # lists groups and tabs
 ```
-The extension lives in `scripts/ext-grupos/` (only `tabs` + `tabGroups` permissions).
+The extension lives in `scripts/ext-group/` (only `tabs` + `tabGroups` permissions).
 
 ## Technical notes (read before touching capture logic)
 
@@ -181,7 +181,7 @@ More gotchas and lessons learned from real use: `references/troubleshooting.md`.
 | Port already in use (`EADDRINUSE`) | Another Chrome is using 9222; close it and relaunch, or use a different `-Port` |
 | Capture wider than expected | Known full-page width bug, already worked around by forcing the emulated viewport in `cdp.mjs` |
 | Blank images in the capture | Lazy-load; `cdp.mjs` already does the scroll preload |
-| `grupo.mjs` cannot find the service worker | The extension took a moment to register; retry (the script already waits) |
+| `group.mjs` cannot find the service worker | The extension took a moment to register; retry (the script already waits) |
 | Login/CAPTCHA blocks progress | Solve it by hand in the visible window and resume |
 
 Expanded table, with root causes and real historical cases:

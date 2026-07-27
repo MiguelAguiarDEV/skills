@@ -1,4 +1,4 @@
-// anota.mjs: annotate elements on a page (browser + terminal, no editor).
+// annotate.mjs: annotate elements on a page (browser + terminal, no editor).
 // Injects an overlay into the Chrome tab (via CDP). You select elements,
 // write a comment on them, and each annotation gets written to a .md file
 // (with selector, HTML, styles, and a screenshot of the element) ready to
@@ -7,7 +7,7 @@
 // Requires Chrome with --remote-debugging-port=9222 (use launch-chrome.ps1).
 //
 // Usage:
-//   node anota.mjs [url] [--out annotations.md] [--tab <tabId>]
+//   node annotate.mjs [url] [--out annotations.md] [--tab <tabId>]
 //   - If you pass a url, it navigates there; otherwise it uses the active tab.
 //   - Keeps the process running: every "Add annotation" in the overlay writes to the .md file.
 //   - Ctrl+C to stop.
@@ -56,7 +56,7 @@ function connect(wsUrl) {
 
 async function main() {
   const o = args();
-  const overlaySrc = await readFile(new URL("./anota-overlay.js", import.meta.url), "utf8");
+  const overlaySrc = await readFile(new URL("./annotate-overlay.js", import.meta.url), "utf8");
 
   let target;
   if (o.url) target = await newTab(o.url);
