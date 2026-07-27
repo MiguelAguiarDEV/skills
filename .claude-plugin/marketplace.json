@@ -16,6 +16,15 @@
       "skills": [
         "./skills/how-to-chrome"
       ]
+    },
+    {
+      "name": "grill-me",
+      "description": "Interroga al usuario sin descanso sobre un plan o diseno hasta alcanzar entendimiento compartido, resolviendo rama a rama del arbol de decision.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/grill-me"
+      ]
     }
   ]
 }
