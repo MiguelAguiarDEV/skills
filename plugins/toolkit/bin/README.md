@@ -1,7 +1,7 @@
 # bin/
 
 Placeholder. Executables placed here would be added to the Bash tool's
-`PATH` while the `grill-me` plugin is enabled.
+`PATH` while the `toolkit` plugin is enabled.
 
 Not used yet, no executables in this folder. See the
 [plugin structure reference](https://code.claude.com/docs/en/plugins-reference).

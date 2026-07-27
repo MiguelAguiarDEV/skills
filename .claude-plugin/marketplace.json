@@ -9,20 +9,12 @@
   },
   "plugins": [
     {
-      "name": "how-to-chrome",
-      "description": "Control Google Chrome from the terminal via the Chrome DevTools Protocol (CDP): navigate, capture, do responsive QA, export to PDF, annotate elements for AI, and group tabs.",
-      "source": "./plugins/how-to-chrome",
+      "name": "toolkit",
+      "description": "Bundle of personal skills: how-to-chrome (control Chrome via CDP) and grill-me (stress-test a plan or design through questions).",
+      "source": "./plugins/toolkit",
       "strict": false,
       "skills": [
-        "./skills/how-to-chrome"
-      ]
-    },
-    {
-      "name": "grill-me",
-      "description": "Interroga al usuario sin descanso sobre un plan o diseno hasta alcanzar entendimiento compartido, resolviendo rama a rama del arbol de decision.",
-      "source": "./plugins/grill-me",
-      "strict": false,
-      "skills": [
+        "./skills/how-to-chrome",
         "./skills/grill-me"
       ]
     }

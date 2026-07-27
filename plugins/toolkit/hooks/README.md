@@ -1,8 +1,9 @@
 # hooks/
 
 Placeholder. Reserved for lifecycle hook handlers belonging to the
-`grill-me` plugin, defined in a `hooks/hooks.json` file at this plugin's own
-source root (`plugins/grill-me/`).
+`toolkit` plugin, defined in a `hooks/hooks.json` file at this plugin's own
+source root (`plugins/toolkit/`). Shared by every skill bundled in this
+plugin (`how-to-chrome`, `grill-me`).
 
 Not used yet, no `hooks.json` in this folder. See
 [Hooks](https://code.claude.com/docs/en/hooks) and the

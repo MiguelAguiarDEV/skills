@@ -1,23 +1,22 @@
 # skills
 
 Skills personales para [Claude Code](https://code.claude.com) (y compatibles con
-el estandar [Agent Skills](https://agentskills.io)), empaquetadas como plugins
-independientes, cada uno con su propia carpeta y su propio manifiesto.
+el estandar [Agent Skills](https://agentskills.io)), empaquetadas en un unico
+plugin (`toolkit`) para que instalarlas todas sea un solo comando.
 
-Cada plugin vive en `plugins/<nombre>/` con su
-`.claude-plugin/plugin.json` (nombre, descripcion, version), su
-`skills/<nombre>/` (`SKILL.md` + `scripts/` + `references/`), y el resto de
-componentes reservados (`agents/`, `hooks/`, `commands/`, `monitors/`, `bin/`).
-Cada plugin tiene su propio `source` en `marketplace.json`, asi que sus
-subagentes/hooks/etc. nunca se mezclan con los de otro plugin. Ver
-[`template/`](./template) para el punto de partida de una skill nueva.
+El plugin vive en `plugins/toolkit/` con su `.claude-plugin/plugin.json`
+(nombre, descripcion, version), su carpeta `skills/` (una subcarpeta por
+skill, cada una con `SKILL.md` + `scripts/` + `references/`), y el resto de
+componentes reservados (`agents/`, `hooks/`, `commands/`, `monitors/`, `bin/`),
+compartidos por todas las skills del plugin. Ver [`template/`](./template)
+para el punto de partida de una skill nueva.
 
-## Plugins disponibles
+## Skills incluidas en `toolkit`
 
-| Plugin | Que hace |
+| Skill | Que hace |
 |-------|----------|
-| [`how-to-chrome`](./plugins/how-to-chrome) | Control Google Chrome from the terminal via CDP (Chrome DevTools Protocol): navigate, capture (incl. full page and responsive), read console/DOM, fill forms, export to PDF, annotate elements to paste into an AI, and group tabs into a dedicated Chrome tab group. No extension, no MCP, no npm dependencies. |
-| [`grill-me`](./plugins/grill-me) | Interrogar al usuario sin descanso sobre un plan o diseno hasta alcanzar entendimiento compartido, resolviendo rama a rama del arbol de decision con una respuesta recomendada en cada pregunta. |
+| [`how-to-chrome`](./plugins/toolkit/skills/how-to-chrome) | Control Google Chrome from the terminal via CDP (Chrome DevTools Protocol): navigate, capture (incl. full page and responsive), read console/DOM, fill forms, export to PDF, annotate elements to paste into an AI, and group tabs into a dedicated Chrome tab group. No extension, no MCP, no npm dependencies. |
+| [`grill-me`](./plugins/toolkit/skills/grill-me) | Interrogar al usuario sin descanso sobre un plan o diseno hasta alcanzar entendimiento compartido, resolviendo rama a rama del arbol de decision con una respuesta recomendada en cada pregunta. |
 
 ## Instalar en Claude Code
 
@@ -27,55 +26,56 @@ Registra este repositorio como marketplace de plugins:
 /plugin marketplace add MiguelAguiarDEV/skills
 ```
 
-Luego instala cada plugin que quieras (no hay instalacion "todo de golpe",
-hay que instalar uno por uno):
+Instala el plugin (trae todas las skills de golpe, en un solo comando):
 
 ```
-/plugin install how-to-chrome@miguelaguiardev-skills
-/plugin install grill-me@miguelaguiardev-skills
+/plugin install toolkit@miguelaguiardev-skills
 ```
 
-O instalalos desde el menu interactivo `/plugin` → `Browse and install
-plugins` (tambien uno a la vez).
+O instalalo desde el menu interactivo `/plugin` → `Browse and install plugins`.
 
-Una vez instalada, basta con mencionar la tarea ("abre esta web en Chrome y
-haz una captura") para que Claude cargue la skill sola.
+Una vez instalado, basta con mencionar la tarea ("abre esta web en Chrome y
+haz una captura", "grill me este plan") para que Claude cargue la skill
+correspondiente sola.
 
-## Crear un plugin nuevo
+## Anadir una skill nueva a `toolkit`
 
 ```bash
-mkdir -p plugins/mi-plugin/.claude-plugin plugins/mi-plugin/skills/mi-skill
-cp template/SKILL.md plugins/mi-plugin/skills/mi-skill/SKILL.md
-$EDITOR plugins/mi-plugin/skills/mi-skill/SKILL.md   # frontmatter (name, description) + instrucciones
-```
-
-Crea `plugins/mi-plugin/.claude-plugin/plugin.json`:
-
-```json
-{
-  "name": "mi-plugin",
-  "description": "...",
-  "version": "1.0.0",
-  "author": { "name": "..." }
-}
+mkdir -p plugins/toolkit/skills/mi-skill
+cp template/SKILL.md plugins/toolkit/skills/mi-skill/SKILL.md
+$EDITOR plugins/toolkit/skills/mi-skill/SKILL.md   # frontmatter (name, description) + instrucciones
 ```
 
 Anade `scripts/` para herramientas ejecutables y `references/` para
 documentacion de detalle (troubleshooting, decisiones de diseno) que no
-necesita cargarse siempre. Registra el plugin en
-[`.claude-plugin/marketplace.json`](./.claude-plugin/marketplace.json) con su
-propio `source` (`./plugins/mi-plugin`), para que quede aislado de los demas
-plugins del marketplace.
+necesita cargarse siempre. Registra la ruta nueva en el array `"skills"` de
+la entrada `toolkit` en
+[`.claude-plugin/marketplace.json`](./.claude-plugin/marketplace.json). Con
+esto, todo el mundo que ya tenga `toolkit` instalado la recibe en la proxima
+`/plugin marketplace update`.
 
-## Estructura de un plugin
+### Si una skill nueva necesita agentes/hooks propios y aislados
 
-Cada carpeta bajo `plugins/<nombre>/` sigue el mismo layout:
+Los `agents/`/`hooks/`/etc. de `plugins/toolkit/` son compartidos por todas
+las skills del bundle (es el precio de la instalacion en un solo comando). Si
+una skill nueva necesita sus propios agentes o hooks sin mezclarse con los
+del resto, dale su propio plugin en vez de anadirla a `toolkit`:
+
+```bash
+mkdir -p plugins/mi-plugin/.claude-plugin plugins/mi-plugin/skills/mi-skill
+```
+
+y una entrada propia en `marketplace.json` con `"source": "./plugins/mi-plugin"`
+(en vez de anadirla a la lista de skills de `toolkit`). Esa skill se instala
+aparte, con su propio `/plugin install mi-plugin@miguelaguiardev-skills`.
+
+## Estructura del plugin `toolkit`
 
 | Carpeta / archivo | Estado | Para que |
 |---|---|---|
 | `.claude-plugin/plugin.json` | En uso | Metadatos del plugin: nombre, descripcion, version |
-| `skills/` | En uso | Skills (`SKILL.md` + `scripts/` + `references/`) |
-| `agents/` | Placeholder | Definiciones de subagentes personalizados |
+| `skills/` | En uso | Una subcarpeta por skill (`SKILL.md` + `scripts/` + `references/`) |
+| `agents/` | Placeholder | Definiciones de subagentes personalizados, compartidos por todas las skills |
 | `hooks/` | Placeholder | `hooks.json`, manejadores de eventos del ciclo de vida |
 | `commands/` | Placeholder | Skills como Markdown plano (estilo legacy; usar `skills/` en su lugar) |
 | `monitors/` | Placeholder | `monitors.json`, monitores de fondo (logs, ficheros, estado externo) |
