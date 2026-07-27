@@ -60,9 +60,12 @@ Ninguna otra dependencia: no hace falta MCP, no hace falta la extension oficial
 
 > **Por que un perfil dedicado y no el de siempre:** desde Chrome 136 el
 > navegador **ignora `--remote-debugging-port` si el perfil es el POR DEFECTO**.
-> El lanzador ya usa un perfil dedicado (`CDP-Profile`) para evitarlo. Si
-> quieres que Chrome arranque **siempre** con el puerto abierto (sin relanzarlo
-> cada sesion), ver la configuracion persistente en `references/persistent-setup.md`.
+> El lanzador ya usa un perfil dedicado (`CDP-Profile`) — una carpeta nueva y
+> separada que **nunca toca, lee ni borra tu perfil real** (cookies, sesiones,
+> contrasenas e historial de tu Chrome de siempre quedan intactos). Si quieres
+> que Chrome arranque **siempre** con el puerto abierto (sin relanzarlo cada
+> sesion), ver la configuracion persistente en `references/persistent-setup.md`
+> — incluye la opcion que no toca ni un solo acceso directo tuyo.
 
 ## 1) `scripts/cdp.mjs` — control del navegador
 
