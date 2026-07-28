@@ -1,0 +1,8 @@
+{
+  "name": "claude-adhd-skills",
+  "description": "Scaffolding for staying organized while developing with AI agents: time-aware conversational daily journaling, a personal markdown notes folder (Obsidian-compatible, Obsidian itself optional), time-based nudges/reminders, and a TDD workflow. Ported from ravila4/claude-adhd-skills.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Miguel Alejandro Santiesteban Aguiar"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"Today is $(date '+%A, %B %d, %Y'). Time: $(date '+%H:%M')\"",
+            "timeout": 5,
+            "statusMessage": "Injecting current date/time..."
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/skills/nudge/scripts/check_alerts.py\"",
+            "timeout": 5,
+            "statusMessage": "Checking for due nudges..."
+          }
+        ]
+      }
+    ]
+  }
+}

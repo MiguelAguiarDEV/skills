@@ -12,6 +12,16 @@
       "name": "toolkit",
       "description": "Bundle of personal skills: how-to-chrome (control Chrome via CDP) and grill-me (stress-test a plan or design through questions).",
       "source": "./plugins/toolkit"
+    },
+    {
+      "name": "claude-adhd-skills",
+      "description": "Scaffolding for staying organized while developing with AI agents: time-aware conversational daily journaling, a personal markdown notes folder (Obsidian-compatible, Obsidian itself optional), time-based nudges/reminders, and a TDD workflow. Ported from ravila4/claude-adhd-skills.",
+      "source": "./plugins/claude-adhd-skills"
+    },
+    {
+      "name": "i-have-adhd",
+      "description": "Shape Claude Code output for an ADHD reader: lead with the next action, number steps, suppress tangents, restate state, make wins visible. Ported from ayghri/i-have-adhd.",
+      "source": "./plugins/i-have-adhd"
     }
   ]
 }
