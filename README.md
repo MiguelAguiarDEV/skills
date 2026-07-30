@@ -44,6 +44,33 @@ skill que venga). Ver la seccion "Works well with" en el `SKILL.md` de
 
 ## Instalar en Claude Code
 
+### Con el instalador
+
+[`install.sh`](./install.sh) envuelve la CLI `claude plugin`: registra el
+marketplace, instala lo que le digas y avisa si vas a acabar con la misma
+skill cargada dos veces.
+
+```bash
+# desde un clon del repo
+./install.sh                      # selector interactivo
+./install.sh --all                # todas, via el plugin toolkit
+./install.sh nudge how-to-chrome  # solo esas, como plugins individuales
+./install.sh --list               # que hay disponible
+```
+
+Sin clonar nada:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/MiguelAguiarDEV/skills/main/install.sh | sh -s -- --all
+```
+
+Es `sh` POSIX y no necesita `jq` ni `python`. Otras opciones utiles:
+`--dry-run` (enseña los comandos sin ejecutarlos), `--scope project` (instala
+para todo el que clone el proyecto en vez de solo para ti) y `--local` (usa un
+checkout local como marketplace, para desarrollar).
+
+### A mano
+
 Registra este repositorio como marketplace de plugins:
 
 ```
@@ -146,10 +173,14 @@ Consecuencias practicas:
 - En Windows hace falta Developer Mode o `git config core.symlinks true` para
   que el clon del repo conserve los symlinks. Instalando desde el marketplace
   da igual; solo afecta a quien clone el repo para desarrollar.
-- Instalar un plugin individual desde una ruta local (`--plugin-dir`) **no**
-  funciona: en ese modo solo se conservan los symlinks internos al propio
-  plugin. Para desarrollo local usa `plugins/toolkit`, que tiene los ficheros
-  de verdad.
+- Anadir el repo como marketplace por ruta local
+  (`claude plugin marketplace add /ruta/al/repo`) **si** funciona: los
+  symlinks se dereferencian igual que desde git. Probado instalando `nudge`
+  asi y comprobando que en la cache aparecen los ficheros reales, scripts
+  incluidos.
+- Lo que **no** funciona es `--plugin-dir`: en ese modo solo se conservan los
+  symlinks internos al propio plugin. Para ese caso usa `plugins/toolkit`,
+  que tiene los ficheros de verdad.
 
 ## Anadir una skill nueva
 
@@ -205,18 +236,24 @@ en `skills/`, y `hooks/` + `NOTICE.md` si les aplica. Esta tabla es la de
 | `skills/` | En uso | Una subcarpeta por skill (`SKILL.md` + `scripts/` + `references/`) |
 | `hooks/` | En uso | `hooks.json` + manejadores de eventos del ciclo de vida (ver arriba) |
 | `NOTICE.md` | En uso | Atribucion de licencia de las skills portadas de otros repos |
-| `agents/` | Placeholder | Definiciones de subagentes personalizados, compartidos por todas las skills |
-| `commands/` | Placeholder | Skills como Markdown plano (estilo legacy; usar `skills/` en su lugar) |
-| `monitors/` | Placeholder | `monitors.json`, monitores de fondo (logs, ficheros, estado externo) |
-| `bin/` | Placeholder | Ejecutables anadidos al `PATH` de la herramienta Bash |
-| `.mcp.json` | No creado aun | Configuracion de servidores MCP |
-| `.lsp.json` | No creado aun | Configuracion de servidores LSP |
-| `settings.json` | No creado aun | Config por defecto del plugin (`agent`, `subagentStatusLine`) |
+| `agents/` | No creada | Definiciones de subagentes personalizados, compartidos por todas las skills |
+| `commands/` | No creada | Skills como Markdown plano (estilo legacy; usar `skills/` en su lugar) |
+| `monitors/` | No creada | `monitors.json`, monitores de fondo (logs, ficheros, estado externo) |
+| `bin/` | No creada | Ejecutables anadidos al `PATH` de la herramienta Bash |
+| `.mcp.json` | No creado | Configuracion de servidores MCP |
+| `.lsp.json` | No creado | Configuracion de servidores LSP |
+| `settings.json` | No creado | Config por defecto del plugin (`agent`, `subagentStatusLine`) |
 
-Los tres ultimos son ficheros sueltos (no carpetas) definidos por la
-[referencia de plugins](https://code.claude.com/docs/en/plugins-reference);
-se documentan aqui como puntos de extension reservados, sin crearlos todavia
-para no activar nada por accidente.
+Todo lo marcado "No creada/No creado" son puntos de extension definidos por la
+[referencia de plugins](https://code.claude.com/docs/en/plugins-reference), que
+se documentan aqui pero **no** existen en el repo a proposito.
+
+> Estas carpetas estuvieron un tiempo creadas con un `README.md` dentro a modo
+> de recordatorio, y fue un error: Claude Code escanea `commands/` y `agents/`
+> y cargaba esos `README.md` como una skill y un agente fantasma llamados
+> "README", visibles en `claude plugin details` y sumando tokens always-on a
+> cada sesion. Si vuelves a crear una de estas carpetas, que sea con contenido
+> real, no con documentacion suelta.
 
 ## Licencia
 
