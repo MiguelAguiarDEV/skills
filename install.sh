@@ -26,6 +26,7 @@ test-driven-development|Logic Gate + Iron Rule: TDD estricto donde hay logica
 i-have-adhd|Estilo de salida para lector con ADHD: accion primero, sin relleno"
 
 SCOPE="user"
+SCOPE_SET=0
 DRY_RUN=0
 FORCE=0
 WANT_ALL=0
@@ -152,6 +153,31 @@ pick_interactive() {
   [ -n "$SELECTION" ] || die "no seleccionaste nada"
 }
 
+# Asked only when the picker ran and --scope was not given on the command line.
+pick_scope() {
+  have_tty || return 0
+
+  {
+    say ""
+    say "Donde lo instalo?"
+    say ""
+    printf '   1) %-10s %s\n' "user" "para ti, en todos tus proyectos (por defecto)"
+    printf '   2) %-10s %s\n' "project" "para todo el que clone este proyecto (.claude/settings.json)"
+    printf '   3) %-10s %s\n' "local" "solo este proyecto y solo para ti (gitignored)"
+    say ""
+    printf 'Seleccion [1]: '
+  } > /dev/tty
+
+  ans=$(read_tty || true)
+  case "$ans" in
+    ""|1) SCOPE="user" ;;
+    2)    SCOPE="project" ;;
+    3)    SCOPE="local" ;;
+    user|project|local) SCOPE="$ans" ;;
+    *) die "seleccion no valida: $ans" ;;
+  esac
+}
+
 # ---------------------------------------------------------------- conflicts
 
 # toolkit and an individual plugin ship the SAME skill. Installing both loads
@@ -225,7 +251,7 @@ while [ $# -gt 0 ]; do
     -f|--force) FORCE=1 ;;
     -s|--scope)
       [ $# -ge 2 ] || die "--scope necesita un valor (user, project o local)"
-      SCOPE="$2"; shift
+      SCOPE="$2"; SCOPE_SET=1; shift
       ;;
     --local)
       # Optional dir argument; defaults to where this script lives.
@@ -266,7 +292,11 @@ if [ "$WANT_ALL" -eq 1 ]; then
 fi
 
 SELECTION=$(printf '%s' "$SELECTION" | sed 's/^ *//')
-[ -n "$SELECTION" ] || pick_interactive
+if [ -z "$SELECTION" ]; then
+  pick_interactive
+  # Interactive run: ask where too, unless --scope already answered it.
+  [ "$SCOPE_SET" -eq 1 ] || pick_scope
+fi
 SELECTION=$(printf '%s' "$SELECTION" | sed 's/^ *//')
 
 check_conflicts "$SELECTION"
