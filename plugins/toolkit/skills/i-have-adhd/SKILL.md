@@ -143,8 +143,8 @@ If yes, send.
 
 ## Works well with
 
-Optional, not a dependency, this skill works standalone. If the separate
-**`claude-adhd-skills`** plugin is also installed:
+Optional, not a dependency, this skill works standalone. Alongside the other
+skills bundled in the same `toolkit` plugin:
 
 - **nudge**'s time-based reminders already come out shaped by the rules
   above once this skill is active (lead with the action, matter-of-fact,

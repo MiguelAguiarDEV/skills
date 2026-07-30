@@ -1,0 +1,101 @@
+# Third-party notice
+
+Some skills bundled in this plugin are ported from other repositories. Each
+section below covers one upstream project: which skills come from it, what
+changed in the port, and its original license text.
+
+Skills written for this repository (`how-to-chrome`, `grill-me`) are not
+covered here; they are distributed under this repository's own
+[MIT license](../../LICENSE), like the ports themselves.
+
+## `daily-journal`, `obsidian-vault`, `nudge`, `test-driven-development`
+
+Ported and adapted from
+[ravila4/claude-adhd-skills](https://github.com/ravila4/claude-adhd-skills),
+licensed under the MIT License, copyright (c) 2026 the original author
+(ravila4).
+
+Changes made in this port:
+- Reframed `daily-journal` and `obsidian-vault` to make clear the Obsidian
+  app itself is optional (the skills only write plain markdown files; the
+  original README overstated this as a hard requirement).
+- Packaged as a proper Claude Code plugin (`.claude-plugin/plugin.json`,
+  `hooks/hooks.json`) instead of the original's manual
+  `~/.claude/skills/` + `~/.claude/hooks/` + hand-edited `settings.json` copy.
+- Moved `nudge`'s scripts under the skill's own `scripts/` folder and moved
+  its SQLite database from next to the scripts (which would be wiped on a
+  plugin update) to a stable path outside the plugin's installed directory
+  (`${CLAUDE_CONFIG_DIR:-~/.claude}/nudge/alerts.db`).
+- Added a short cross-reference to `i-have-adhd` in `daily-journal` and
+  `nudge` (optional, not a dependency). These skills originally shipped in a
+  separate `claude-adhd-skills` plugin in this repository; they were merged
+  into `toolkit` without functional changes.
+
+Original MIT license text:
+
+```
+MIT License
+
+Copyright (c) 2026 ravila4
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+## `i-have-adhd`
+
+The `i-have-adhd` skill and its `hooks/always-on.sh` hook are ported from
+[ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd), licensed under
+the MIT License, copyright (c) 2026 Ayoub Ghriss.
+
+Changes made in this port:
+- Added a "Works well with" section cross-referencing `nudge` and
+  `daily-journal` (optional, not a dependency).
+- No functional changes to the ruleset or the always-on hook mechanism. The
+  skill originally shipped in a separate `i-have-adhd` plugin in this
+  repository; it was merged into `toolkit` as-is, with its `SessionStart`
+  hook folded into this plugin's `hooks/hooks.json`.
+
+Original MIT license text:
+
+```
+MIT License
+
+Copyright (c) 2026 Ayoub Ghriss
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+Both ports, as adapted here, are distributed under this repository's own
+[MIT license](../../LICENSE).

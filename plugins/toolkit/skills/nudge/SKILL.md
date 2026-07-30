@@ -95,8 +95,9 @@ updates).
 
 ## Works well with
 
-- **i-have-adhd** (separate plugin, optional): if installed and active, its
-  output-style rules already apply to whatever Claude says when a nudge
-  fires (lead with the action, matter-of-fact tone, no filler) -- there is
-  nothing extra to wire up, i-have-adhd's rules govern tone regardless of
-  which skill produced the underlying message.
+- **i-have-adhd** (same plugin, optional): if active, its output-style rules
+  already apply to whatever Claude says when a nudge fires (lead with the
+  action, matter-of-fact tone, no filler) -- there is nothing extra to wire
+  up, i-have-adhd's rules govern tone regardless of which skill produced the
+  underlying message. It is not auto-invoked: run `/i-have-adhd` (or set its
+  always-on flag) to turn it on.

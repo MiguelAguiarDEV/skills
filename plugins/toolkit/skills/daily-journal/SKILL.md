@@ -340,4 +340,4 @@ The "day character" is a brief descriptor of the day's shape -- how long, what k
 ## Works well with
 
 - **obsidian-vault** (same plugin): folder structure, naming, and formatting conventions for where/how to save the entry.
-- **i-have-adhd** (separate plugin, optional): if installed and active, its output-style rules apply to how Claude talks *around* the journal (e.g. the questions it asks), not to the saved entry itself. The saved entry keeps this skill's own template regardless.
+- **i-have-adhd** (same plugin, optional): if active, its output-style rules apply to how Claude talks *around* the journal (e.g. the questions it asks), not to the saved entry itself. The saved entry keeps this skill's own template regardless. It is not auto-invoked: run `/i-have-adhd` (or set its always-on flag) to turn it on.

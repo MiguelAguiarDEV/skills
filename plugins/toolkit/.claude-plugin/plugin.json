@@ -1,7 +1,7 @@
 {
   "name": "toolkit",
-  "description": "Bundle of personal skills: how-to-chrome (control Chrome via CDP) and grill-me (stress-test a plan or design through questions).",
-  "version": "1.3.0",
+  "description": "Every personal skill in one plugin: how-to-chrome (drive the user's real Chrome via CDP), grill-me (stress-test a plan through questions), daily-journal (time-aware development journaling), obsidian-vault (personal markdown notes folder), nudge (time-based reminders), test-driven-development (Logic Gate + Iron Rule TDD), and i-have-adhd (ADHD-friendly output style).",
+  "version": "2.0.0",
   "author": {
     "name": "Miguel Alejandro Santiesteban Aguiar"
   }
