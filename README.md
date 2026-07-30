@@ -1,16 +1,16 @@
 # skills
 
 Skills personales para [Claude Code](https://code.claude.com) (y compatibles con
-el estandar [Agent Skills](https://agentskills.io)), empaquetadas en un unico
-plugin `toolkit` para que instalarlas todas sea un solo comando
-(`/plugin install toolkit@miguelaguiardev-skills`).
+el estandar [Agent Skills](https://agentskills.io)). Se pueden instalar de dos
+formas: el plugin `toolkit` las trae **todas** de golpe, o cada skill tiene su
+**propio plugin** para instalarla suelta.
 
-El plugin vive en [`plugins/toolkit/`](./plugins/toolkit) con su
-`.claude-plugin/plugin.json` (nombre, descripcion, version), su carpeta
-`skills/` (una subcarpeta por skill, cada una con `SKILL.md` + `scripts/` +
-`references/`), sus `hooks/`, y el resto de componentes reservados (`agents/`,
-`commands/`, `monitors/`, `bin/`), compartidos por todas las skills. Ver
-[`template/`](./template) para el punto de partida de una skill nueva.
+El contenido real de cada skill vive una sola vez, en
+[`plugins/toolkit/skills/`](./plugins/toolkit/skills) (una subcarpeta por
+skill, con `SKILL.md` + `scripts/` + `references/`). Los plugins individuales
+no duplican nada: su `skills/<nombre>` es un symlink al de `toolkit`. Ver
+[Como estan montados los plugins individuales](#como-estan-montados-los-plugins-individuales)
+y [`template/`](./template) para el punto de partida de una skill nueva.
 
 ## Skills disponibles
 
@@ -44,14 +44,37 @@ skill que venga). Ver la seccion "Works well with" en el `SKILL.md` de
 
 ## Instalar en Claude Code
 
-Registra este repositorio como marketplace de plugins e instala el plugin:
+Registra este repositorio como marketplace de plugins:
 
 ```
 /plugin marketplace add MiguelAguiarDEV/skills
+```
+
+**Todas las skills de golpe:**
+
+```
 /plugin install toolkit@miguelaguiardev-skills
 ```
 
-O instalalo desde el menu interactivo `/plugin` → `Browse and install plugins`.
+**O solo las que quieras**, cada una con su propio plugin:
+
+```
+/plugin install how-to-chrome@miguelaguiardev-skills
+/plugin install grill-me@miguelaguiardev-skills
+/plugin install daily-journal@miguelaguiardev-skills
+/plugin install obsidian-vault@miguelaguiardev-skills
+/plugin install nudge@miguelaguiardev-skills
+/plugin install test-driven-development@miguelaguiardev-skills
+/plugin install i-have-adhd@miguelaguiardev-skills
+```
+
+Tambien desde el menu interactivo `/plugin` → `Browse and install plugins`.
+
+> **No instales `toolkit` y un plugin individual a la vez.** Son la misma
+> skill por dos caminos: se cargaria duplicada y, si tiene hook (`nudge`,
+> `daily-journal`, `i-have-adhd`), el hook correria dos veces por prompt.
+> Elige una via: `toolkit` si las quieres casi todas, plugins sueltos si
+> quieres pocas.
 
 Una vez instalado, basta con mencionar la tarea ("abre esta web en Chrome y
 haz una captura", "grill me este plan", "que hice hoy?", "parame en 30
@@ -59,12 +82,13 @@ minutos") para que Claude cargue la skill correspondiente sola.
 `i-have-adhd` es la excepcion: no se auto-invoca, hay que escribir
 `/i-have-adhd` (o activar el flag de "siempre", ver su `SKILL.md`).
 
-> **Si tenias instalados los plugins `claude-adhd-skills` o `i-have-adhd`**
-> (versiones anteriores de este marketplace): ya no existen, sus skills viven
-> ahora dentro de `toolkit`. Desinstalalos (`/plugin uninstall
-> claude-adhd-skills@miguelaguiardev-skills`, idem `i-have-adhd`), corre
-> `/plugin marketplace update MiguelAguiarDEV/skills` e instala `toolkit`.
-> Instalar los tres a la vez duplicaria las mismas skills.
+> **Si tenias instalado el plugin `claude-adhd-skills`** (version anterior de
+> este marketplace): ya no existe. Sus cuatro skills viven ahora en `toolkit`,
+> o como plugin propio cada una. Desinstalalo (`/plugin uninstall
+> claude-adhd-skills@miguelaguiardev-skills`), corre
+> `/plugin marketplace update MiguelAguiarDEV/skills` e instala lo que
+> prefieras. `i-have-adhd` sigue existiendo como plugin con el mismo nombre,
+> asi que ese se actualiza solo.
 
 > **Si ya tenias este marketplace anadido de antes** y `install` no encuentra
 > un plugin nuevo: `marketplace add` no refresca el catalogo si ya estaba en
@@ -73,10 +97,9 @@ minutos") para que Claude cargue la skill correspondiente sola.
 
 ## Hooks activos
 
-Los hooks son del plugin, no de una skill: se ejecutan en cualquier sesion
-con `toolkit` instalado, este activa o no la skill a la que sirven. Estan
-declarados en
-[`plugins/toolkit/hooks/hooks.json`](./plugins/toolkit/hooks/hooks.json):
+Los hooks son del plugin, no de una skill: corren en cualquier sesion con el
+plugin instalado, este activa o no la skill a la que sirven. Tres skills
+traen hook:
 
 | Evento | Que corre | Para que skill |
 |---|---|---|
@@ -84,12 +107,53 @@ declarados en
 | `UserPromptSubmit` | `skills/nudge/scripts/check_alerts.py` | `nudge` |
 | `SessionStart` | `hooks/always-on.sh` | `i-have-adhd` |
 
+Instalando `toolkit` los tienes los tres a la vez
+([`plugins/toolkit/hooks/hooks.json`](./plugins/toolkit/hooks/hooks.json));
+instalando un plugin individual, solo el suyo (cada uno lleva su propio
+`hooks/hooks.json` con la parte que le toca).
+
 Los tres son inocuos cuando no se usan: la fecha son unos bytes de contexto,
 `check_alerts.py` no imprime nada si no hay recordatorio pendiente, y
 `always-on.sh` sale de inmediato salvo que exista el flag
 `~/.claude/.i-have-adhd-always`. Ninguno bloquea la sesion (timeout de 5s).
 
+## Como estan montados los plugins individuales
+
+Cada `plugins/<skill>/` es un plugin de verdad (con su
+`.claude-plugin/plugin.json` y su entrada en `marketplace.json`), pero **no
+contiene una copia de la skill**: su `skills/<skill>` es un symlink a
+`plugins/toolkit/skills/<skill>`.
+
+```
+plugins/nudge/skills/nudge -> ../../toolkit/skills/nudge
+```
+
+Funciona porque al instalar, un symlink que apunta a otro sitio **dentro del
+mismo marketplace** se dereferencia: Claude Code copia el contenido real a su
+cache en lugar del enlace (ver
+[Share files within a marketplace with symlinks](https://code.claude.com/docs/en/plugins-reference#share-files-within-a-marketplace-with-symlinks)).
+Lo que no funciona es apuntar fuera del plugin desde `plugin.json` (un
+`"skills": ["../toolkit/..."]` se rompe tras instalar, porque esos ficheros
+no se copian): por eso symlinks y no rutas en el manifiesto.
+
+Consecuencias practicas:
+
+- La skill se edita **en un solo sitio**, `plugins/toolkit/skills/<skill>/`.
+  No hay que sincronizar copias ni existe riesgo de que diverjan.
+- `hooks/hooks.json` y `NOTICE.md` si estan duplicados en cada plugin
+  individual (contenido distinto en cada uno: solo su hook, solo su
+  atribucion). Si cambias un hook, tocalo en los dos sitios.
+- En Windows hace falta Developer Mode o `git config core.symlinks true` para
+  que el clon del repo conserve los symlinks. Instalando desde el marketplace
+  da igual; solo afecta a quien clone el repo para desarrollar.
+- Instalar un plugin individual desde una ruta local (`--plugin-dir`) **no**
+  funciona: en ese modo solo se conservan los symlinks internos al propio
+  plugin. Para desarrollo local usa `plugins/toolkit`, que tiene los ficheros
+  de verdad.
+
 ## Anadir una skill nueva
+
+La skill nueva va siempre en `toolkit`, que es donde vive el contenido:
 
 ```bash
 mkdir -p plugins/toolkit/skills/mi-skill
@@ -99,25 +163,41 @@ $EDITOR plugins/toolkit/skills/mi-skill/SKILL.md   # frontmatter (name, descript
 
 Anade `scripts/` para herramientas ejecutables y `references/` para
 documentacion de detalle (troubleshooting, decisiones de diseno) que no
-necesita cargarse siempre. No hace falta tocar `marketplace.json`: las skills
-se autodescubren desde la carpeta `skills/` del plugin.
+necesita cargarse siempre. Con esto ya entra en `toolkit`: las skills se
+autodescubren desde la carpeta `skills/` del plugin.
 
-Si la skill necesita hooks o agentes propios, van en los `hooks/`/`agents/`
-del plugin y quedan compartidos con el resto de skills (es el precio de que
-instalar todo sea un solo comando). Si algun dia una skill necesita quedar
-aislada de verdad, dale su propio plugin (`plugins/mi-plugin/` con su
-`.claude-plugin/plugin.json`) y una entrada propia en
+Para que ademas se pueda instalar suelta, dale su plugin individual:
+
+```bash
+mkdir -p plugins/mi-skill/.claude-plugin plugins/mi-skill/skills
+ln -s ../../toolkit/skills/mi-skill plugins/mi-skill/skills/mi-skill
+$EDITOR plugins/mi-skill/.claude-plugin/plugin.json   # name, description, version, author
+```
+
+y anade su entrada en
 [`.claude-plugin/marketplace.json`](./.claude-plugin/marketplace.json) con
-`"source": "./plugins/mi-plugin"`; se instalaria aparte.
+`"source": "./plugins/mi-skill"`. Si la skill trae hook, replica en
+`plugins/mi-skill/hooks/hooks.json` solo la parte suya del hooks.json de
+`toolkit`.
+
+Ojo con los hooks y agentes: dentro de `toolkit` son del plugin, no de la
+skill, asi que los comparten todas (es el precio de que instalar todo sea un
+solo comando). El plugin individual es justamente la valvula de escape para
+quien no los quiera.
 
 ### Si la skill viene de otro repo (fork/port)
 
 Anade una seccion en
 [`plugins/toolkit/NOTICE.md`](./plugins/toolkit/NOTICE.md) con la licencia
 original y un resumen de que se cambio en el port (ver las secciones ya
-existentes como ejemplo).
+existentes como ejemplo), y un `NOTICE.md` corto en su plugin individual
+apuntando a ese (ver [`plugins/nudge/NOTICE.md`](./plugins/nudge/NOTICE.md)).
 
-## Estructura del plugin
+## Estructura de `toolkit`
+
+Los plugins individuales solo tienen `.claude-plugin/plugin.json`, el symlink
+en `skills/`, y `hooks/` + `NOTICE.md` si les aplica. Esta tabla es la de
+`toolkit`, que es el plugin completo:
 
 | Carpeta / archivo | Estado | Para que |
 |---|---|---|

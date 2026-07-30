@@ -1,0 +1,8 @@
+{
+  "name": "nudge",
+  "description": "Time-based reminders (\"stop me at 11\", \"standup in 30m\") via hook + SQLite. Not for process monitoring. Ported from ravila4/claude-adhd-skills.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Miguel Alejandro Santiesteban Aguiar"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "grill-me",
+  "description": "Interview the user relentlessly about a plan or design until reaching shared understanding, resolving each branch of the decision tree with a recommended answer at every question.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Miguel Alejandro Santiesteban Aguiar"
+  }
+}

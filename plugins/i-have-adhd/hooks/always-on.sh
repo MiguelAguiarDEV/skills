@@ -1,0 +1,1 @@
+../../toolkit/hooks/always-on.sh
