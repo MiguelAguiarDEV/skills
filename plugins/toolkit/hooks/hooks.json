@@ -1,17 +1,5 @@
 {
   "hooks": {
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo \"Today is $(date '+%A, %B %d, %Y'). Time: $(date '+%H:%M')\"",
-            "timeout": 5,
-            "statusMessage": "Injecting current date/time..."
-          }
-        ]
-      }
-    ],
     "SessionStart": [
       {
         "matcher": "startup|resume|clear|compact",

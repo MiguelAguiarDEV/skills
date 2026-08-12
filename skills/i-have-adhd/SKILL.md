@@ -6,7 +6,6 @@ license: MIT (ported from ayghri/i-have-adhd, see ../../NOTICE.md)
 metadata:
   tags: "adhd, output-style, productivity, formatting"
   category: productivity
-  related-skills: "daily-journal"
 ---
 
 # i-have-adhd
@@ -140,12 +139,3 @@ Then verify: if the reader reads only the first line and the last line, do they 
 
 If yes, send.
 
-## Works well with
-
-Optional, not a dependency, this skill works standalone. Alongside the other
-skills bundled in the same `toolkit` plugin:
-
-- **daily-journal**'s conversational questions are an intentional exception
-  to rule 1 (see "When to break the rules" #1: explaining/walking through
-  stays full-length); the *saved* journal entry itself still follows
-  daily-journal's own template, not this skill's numbered-list shape.

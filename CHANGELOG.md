@@ -8,13 +8,21 @@ Las versiones son las de los plugins; el marketplace lleva la suya en
 
 ### Removed
 
-- **Se elimina la skill `nudge`** y todo lo suyo: `skills/nudge/` con sus tres
-  scripts, `hooks/nudge.json` y el plugin `nudge`. El marketplace declara
-  `renames: { "nudge": null }`, asi que Claude Code retira el plugin de quien
-  lo tenga instalado en vez de dejarlo apuntando a una entrada inexistente.
-  Su base de datos (`${CLAUDE_CONFIG_DIR:-~/.claude}/nudge/alerts.db`) es tuya
-  y no la toca nadie: borrala a mano si no la quieres.
-- `toolkit` 2.1.0 → 3.0.0 (una skill menos), marketplace 3.0.0 → 3.1.0.
+- **Se eliminan las skills `nudge`, `daily-journal` y `obsidian-vault`**, con
+  sus scripts, sus hooks (`hooks/nudge.json`, `hooks/daily-journal.json`) y
+  sus plugins. El repo se queda con cuatro: `how-to-chrome`, `grill-me`,
+  `test-driven-development` e `i-have-adhd`.
+- Con `daily-journal` desaparece **la inyeccion de fecha/hora** en cada
+  prompt, que era su hook. El unico hook que queda es el `SessionStart` de
+  `i-have-adhd`.
+- El marketplace declara los tres en `renames` con valor `null`, asi que
+  Claude Code los retira de `enabledPlugins` de quien los tenga instalados en
+  vez de dejarlo apuntando a entradas inexistentes.
+- Los datos que generaron esas skills viven fuera del plugin y no los toca
+  nadie: la base de `nudge`
+  (`${CLAUDE_CONFIG_DIR:-~/.claude}/nudge/alerts.db`) y las notas que
+  escribieran `daily-journal` u `obsidian-vault` son tuyas.
+- `toolkit` 2.1.0 → 4.0.0 (tres skills menos), marketplace 3.0.0 → 3.2.0.
 
 ### Changed
 

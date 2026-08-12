@@ -16,14 +16,9 @@ licensed under the MIT License, copyright (c) 2026 the original author
 (ravila4).
 
 Changes made in this port:
-- Reframed `daily-journal` and `obsidian-vault` to make clear the Obsidian
-  app itself is optional (the skills only write plain markdown files; the
-  original README overstated this as a hard requirement).
-- Packaged as a proper Claude Code plugin (`.claude-plugin/plugin.json`,
-  `hooks/hooks.json`) instead of the original's manual
-  `~/.claude/skills/` + `~/.claude/hooks/` + hand-edited `settings.json` copy.
-- Added a short cross-reference to `i-have-adhd` in `daily-journal`
-  (optional, not a dependency).
+- Packaged as a proper Claude Code plugin (`.claude-plugin/plugin.json`)
+  instead of the original's manual `~/.claude/skills/` + `~/.claude/hooks/`
+  + hand-edited `settings.json` copy.
 - Only part of the upstream's skills are ported here; the rest are not
   distributed.
 

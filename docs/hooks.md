@@ -5,16 +5,14 @@ instalado, uses o no la skill.
 
 | Evento | Que corre | De que skill | Fuente |
 |---|---|---|---|
-| `UserPromptSubmit` | inyeccion de fecha/hora | `daily-journal` | [`hooks/daily-journal.json`](../hooks/daily-journal.json) |
 | `SessionStart` | `always-on.sh` | `i-have-adhd` | [`hooks/i-have-adhd.json`](../hooks/i-have-adhd.json) |
 
-`toolkit` trae los dos; cada plugin individual solo el suyo. El build compone
-el `hooks/hooks.json` de cada plugin concatenando los fragmentos de las skills
+`toolkit` lo trae, igual que el plugin individual. El build compone el
+`hooks/hooks.json` de cada plugin concatenando los fragmentos de las skills
 que incluye, asi que **no hay nada que mantener sincronizado a mano**.
 
-Son inertes sin usarse: la fecha son unos bytes, `check_alerts.py` no imprime
-nada sin recordatorios y `always-on.sh` sale al instante salvo que exista
-`${CLAUDE_CONFIG_DIR:-~/.claude}/.i-have-adhd-always`. Timeout de 5s, ninguno
+Es inerte sin usarse: `always-on.sh` sale al instante salvo que exista
+`${CLAUDE_CONFIG_DIR:-~/.claude}/.i-have-adhd-always`. Timeout de 5s, no
 bloquea la sesion.
 
 ## Rutas

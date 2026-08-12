@@ -32,8 +32,6 @@ REPO_URL="https://github.com/MiguelAguiarDEV/skills.git"
 # BEGIN GENERATED SKILL_LIST -- node build/build.mjs
 SKILL_LIST="how-to-chrome|Manejar tu Chrome real desde la terminal via CDP
 grill-me|Interrogarte sobre un plan hasta que no queden ramas sin resolver
-daily-journal|Diario de desarrollo conversacional, consciente de la hora
-obsidian-vault|Convenciones para una carpeta de notas personal (Obsidian opcional)
 test-driven-development|Logic Gate + Iron Rule: TDD estricto donde hay logica
 i-have-adhd|Estilo de salida para lector con ADHD: accion primero, sin relleno"
 # END GENERATED SKILL_LIST
@@ -266,7 +264,7 @@ check_conflicts() {
   say ""
   say "toolkit y los plugins individuales traen LA MISMA skill. Con los dos"
   say "instalados la skill se carga dos veces y, si tiene hook"
-  say "(daily-journal, i-have-adhd), el hook corre dos veces por prompt."
+  say "(i-have-adhd), el hook corre dos veces por prompt."
   say ""
 
   if [ "$FORCE" -eq 1 ]; then

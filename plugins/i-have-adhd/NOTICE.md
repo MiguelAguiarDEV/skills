@@ -15,8 +15,6 @@ ported from [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd),
 licensed under the MIT License, copyright (c) 2026 Ayoub Ghriss.
 
 Changes made in this port:
-- Added a "Works well with" section cross-referencing `daily-journal`
-  (optional, not a dependency).
 - No functional changes to the ruleset. The always-on hook mechanism is
   unchanged; only the path it resolves `SKILL.md` from was adjusted for this
   repository's layout.

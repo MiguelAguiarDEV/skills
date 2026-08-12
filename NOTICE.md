@@ -8,7 +8,7 @@ the port, and its original license text.
 
 Everything else is original to this repository and distributed under its own [MIT license](./LICENSE), as are the ports themselves.
 
-## `daily-journal`, `obsidian-vault`, `test-driven-development`
+## `test-driven-development`
 
 Ported and adapted from
 [ravila4/claude-adhd-skills](https://github.com/ravila4/claude-adhd-skills),
@@ -16,14 +16,9 @@ licensed under the MIT License, copyright (c) 2026 the original author
 (ravila4).
 
 Changes made in this port:
-- Reframed `daily-journal` and `obsidian-vault` to make clear the Obsidian
-  app itself is optional (the skills only write plain markdown files; the
-  original README overstated this as a hard requirement).
-- Packaged as a proper Claude Code plugin (`.claude-plugin/plugin.json`,
-  `hooks/hooks.json`) instead of the original's manual
-  `~/.claude/skills/` + `~/.claude/hooks/` + hand-edited `settings.json` copy.
-- Added a short cross-reference to `i-have-adhd` in `daily-journal`
-  (optional, not a dependency).
+- Packaged as a proper Claude Code plugin (`.claude-plugin/plugin.json`)
+  instead of the original's manual `~/.claude/skills/` + `~/.claude/hooks/`
+  + hand-edited `settings.json` copy.
 - Only part of the upstream's skills are ported here; the rest are not
   distributed.
 
@@ -60,8 +55,6 @@ ported from [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd),
 licensed under the MIT License, copyright (c) 2026 Ayoub Ghriss.
 
 Changes made in this port:
-- Added a "Works well with" section cross-referencing `daily-journal`
-  (optional, not a dependency).
 - No functional changes to the ruleset. The always-on hook mechanism is
   unchanged; only the path it resolves `SKILL.md` from was adjusted for this
   repository's layout.

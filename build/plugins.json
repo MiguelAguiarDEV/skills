@@ -6,7 +6,7 @@
   "marketplace": {
     "name": "miguelaguiardev-skills",
     "description": "Skills personales para Claude Code: el plugin `toolkit` las trae todas, o instala cada skill por separado",
-    "version": "3.1.0",
+    "version": "3.2.0",
     "owner": {
       "name": "Miguel Alejandro Santiesteban Aguiar",
       "url": "https://github.com/MiguelAguiarDEV"
@@ -25,18 +25,16 @@
 
   "//notices": "upstream slug (notices/<slug>.md) -> which skills it covers",
   "notices": {
-    "ravila4-claude-adhd-skills": [
-      "daily-journal",
-      "obsidian-vault",
-      "test-driven-development"
-    ],
+    "ravila4-claude-adhd-skills": ["test-driven-development"],
     "ayghri-i-have-adhd": ["i-have-adhd"]
   },
 
   "//renames": "former plugin name -> current name, or null if it was removed.",
   "//renames2": "Lets Claude Code migrate users who already have it installed.",
   "renames": {
-    "nudge": null
+    "nudge": null,
+    "daily-journal": null,
+    "obsidian-vault": null
   },
 
   "//plugins": "skills: \"*\" means every skill. hooks and notices are derived.",
@@ -44,11 +42,11 @@
     {
       "name": "toolkit",
       "displayName": "Toolkit",
-      "version": "3.0.0",
+      "version": "4.0.0",
       "skills": "*",
       "category": "productivity",
       "keywords": ["skills", "bundle", "productivity", "adhd"],
-      "description": "Every personal skill in one plugin: how-to-chrome (drive the user's real Chrome via CDP), grill-me (stress-test a plan through questions), daily-journal (time-aware development journaling), obsidian-vault (personal markdown notes folder), test-driven-development (Logic Gate + Iron Rule TDD), and i-have-adhd (ADHD-friendly output style)."
+      "description": "Every personal skill in one plugin: how-to-chrome (drive the user's real Chrome via CDP), grill-me (stress-test a plan through questions), test-driven-development (Logic Gate + Iron Rule TDD), and i-have-adhd (ADHD-friendly output style)."
     },
     {
       "name": "how-to-chrome",
@@ -69,26 +67,6 @@
       "keywords": ["planning", "review", "questions", "design"],
       "tagline": "Interrogarte sobre un plan hasta que no queden ramas sin resolver",
       "description": "Interview the user relentlessly about a plan or design until reaching shared understanding, resolving each branch of the decision tree with a recommended answer at every question."
-    },
-    {
-      "name": "daily-journal",
-      "displayName": "Daily Journal",
-      "version": "1.1.0",
-      "skills": ["daily-journal"],
-      "category": "productivity",
-      "keywords": ["journal", "standup", "notes", "adhd"],
-      "tagline": "Diario de desarrollo conversacional, consciente de la hora",
-      "description": "Time-aware conversational development journal (morning=planning, evening=reflection). Writes structured markdown; Obsidian optional. Ported from ravila4/claude-adhd-skills."
-    },
-    {
-      "name": "obsidian-vault",
-      "displayName": "Obsidian Vault",
-      "version": "1.1.0",
-      "skills": ["obsidian-vault"],
-      "category": "productivity",
-      "keywords": ["obsidian", "notes", "markdown", "vault"],
-      "tagline": "Convenciones para una carpeta de notas personal (Obsidian opcional)",
-      "description": "Folder structure, naming and formatting conventions for a personal markdown notes folder (Obsidian-compatible, Obsidian itself optional). Ported from ravila4/claude-adhd-skills."
     },
     {
       "name": "test-driven-development",

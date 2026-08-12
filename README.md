@@ -14,17 +14,11 @@ con su plugin individual, o **copiandolas** en tu `~/.claude`.
 |---|---|
 | [`how-to-chrome`](./skills/how-to-chrome) | Maneja tu Chrome real (tu perfil, tus sesiones) desde la terminal via CDP: navegar, capturar (full page y por breakpoint), leer consola/DOM, rellenar formularios, exportar a PDF, anotar elementos y agrupar pestanas. Sin extension, sin MCP, sin npm. |
 | [`grill-me`](./skills/grill-me) | Te interroga sobre un plan o diseno hasta que no queden ramas del arbol de decision sin resolver, con una respuesta recomendada en cada pregunta. |
-| [`daily-journal`](./skills/daily-journal) † | Diario de desarrollo conversacional, consciente de la hora (mañana = planificacion, tarde/noche = reflexion). Escribe markdown estructurado. |
-| [`obsidian-vault`](./skills/obsidian-vault) † | Estructura, nombrado y formato para una carpeta de notas personal. Compatible con Obsidian, sin requerirlo. |
-| [`test-driven-development`](./skills/test-driven-development) † | Logic Gate + Iron Rule: triage de que necesita tests, luego TDD estricto para lo que tiene logica. |
-| [`i-have-adhd`](./skills/i-have-adhd) ‡ | Estilo de salida para lector con ADHD: accion primero, pasos numerados, sin relleno. **No se auto-invoca**: escribe `/i-have-adhd`. |
-
-† portadas de [ravila4/claude-adhd-skills](https://github.com/ravila4/claude-adhd-skills) ·
-‡ portada de [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd) · ambas MIT,
-atribucion en [`NOTICE.md`](./NOTICE.md)
+| [`test-driven-development`](./skills/test-driven-development) | Logic Gate + Iron Rule: triage de que necesita tests, luego TDD estricto para lo que tiene logica. |
+| [`i-have-adhd`](./skills/i-have-adhd) | Estilo de salida para lector con ADHD: accion primero, pasos numerados, sin relleno. **No se auto-invoca**: escribe `/i-have-adhd`. |
 
 Una vez instaladas se activan solas al mencionar la tarea ("haz una captura de
-esta web", "grill me este plan", "que hice hoy?", "parame en 30 minutos").
+esta web", "grill me este plan", "vamos a hacer esto con tests").
 
 ## Instalar
 
@@ -66,8 +60,8 @@ Dentro de Claude Code son los mismos comandos con `/`:
 | `local` | `.claude/settings.local.json` | Solo tu, solo en ese proyecto |
 
 > **No instales `toolkit` y un plugin individual a la vez.** Son la misma skill
-> por dos caminos: se carga dos veces y, si tiene hook (`daily-journal`,
-> `i-have-adhd`), el hook corre dos veces por prompt.
+> por dos caminos: se carga dos veces y, si tiene hook (`i-have-adhd`), el
+> hook corre dos veces por prompt.
 > `install.sh` te avisa; a mano no.
 
 ### Copiando en tu carpeta de configuracion
