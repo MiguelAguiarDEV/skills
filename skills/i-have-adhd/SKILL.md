@@ -6,7 +6,7 @@ license: MIT (ported from ayghri/i-have-adhd, see ../../NOTICE.md)
 metadata:
   tags: "adhd, output-style, productivity, formatting"
   category: productivity
-  related-skills: "nudge, daily-journal"
+  related-skills: "daily-journal"
 ---
 
 # i-have-adhd
@@ -145,9 +145,6 @@ If yes, send.
 Optional, not a dependency, this skill works standalone. Alongside the other
 skills bundled in the same `toolkit` plugin:
 
-- **nudge**'s time-based reminders already come out shaped by the rules
-  above once this skill is active (lead with the action, matter-of-fact,
-  visible progress), nothing extra to configure.
 - **daily-journal**'s conversational questions are an intentional exception
   to rule 1 (see "When to break the rules" #1: explaining/walking through
   stays full-length); the *saved* journal entry itself still follows

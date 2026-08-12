@@ -9,10 +9,10 @@
 # Examples:
 #   ./install.sh                          pick interactively
 #   ./install.sh --all                    every skill, via the `toolkit` plugin
-#   ./install.sh nudge how-to-chrome      just those, as individual plugins
+#   ./install.sh grill-me how-to-chrome   just those, as individual plugins
 #   ./install.sh --list                   show what is available
 #   ./install.sh --copy --all             copy every skill into ~/.claude
-#   ./install.sh --copy --as-plugin nudge copy nudge as a self-contained plugin
+#   ./install.sh --copy --as-plugin grill-me   copy it as a standalone plugin
 #   ./install.sh --copy --uninstall       undo a --copy install
 #
 # Also works without cloning:
@@ -34,7 +34,6 @@ SKILL_LIST="how-to-chrome|Manejar tu Chrome real desde la terminal via CDP
 grill-me|Interrogarte sobre un plan hasta que no queden ramas sin resolver
 daily-journal|Diario de desarrollo conversacional, consciente de la hora
 obsidian-vault|Convenciones para una carpeta de notas personal (Obsidian opcional)
-nudge|Recordatorios por tiempo (parame a las 11, standup en 30m)
 test-driven-development|Logic Gate + Iron Rule: TDD estricto donde hay logica
 i-have-adhd|Estilo de salida para lector con ADHD: accion primero, sin relleno"
 # END GENERATED SKILL_LIST
@@ -109,7 +108,7 @@ Opciones:
 
 Ejemplos:
   ./install.sh --all
-  ./install.sh nudge how-to-chrome
+  ./install.sh grill-me how-to-chrome
   ./install.sh --scope project --all
   ./install.sh --copy --all
 EOF
@@ -125,7 +124,7 @@ list_skills() {
   done
   say ""
   say "Instala todas con --all, o nombra las que quieras:"
-  say "  ./install.sh nudge grill-me"
+  say "  ./install.sh grill-me how-to-chrome"
 }
 
 # Names of plugins from THIS marketplace that are currently installed.
@@ -266,8 +265,8 @@ check_conflicts() {
   for p in $clash; do say "  - $p"; done
   say ""
   say "toolkit y los plugins individuales traen LA MISMA skill. Con los dos"
-  say "instalados la skill se carga dos veces y, si tiene hook (nudge,"
-  say "daily-journal, i-have-adhd), el hook corre dos veces por prompt."
+  say "instalados la skill se carga dos veces y, si tiene hook"
+  say "(daily-journal, i-have-adhd), el hook corre dos veces por prompt."
   say ""
 
   if [ "$FORCE" -eq 1 ]; then

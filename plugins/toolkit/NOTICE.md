@@ -8,7 +8,7 @@ the port, and its original license text.
 
 Everything else is original to this repository and distributed under its own [MIT license](../../LICENSE), as are the ports themselves.
 
-## `daily-journal`, `nudge`, `obsidian-vault`, `test-driven-development`
+## `daily-journal`, `obsidian-vault`, `test-driven-development`
 
 Ported and adapted from
 [ravila4/claude-adhd-skills](https://github.com/ravila4/claude-adhd-skills),
@@ -22,12 +22,10 @@ Changes made in this port:
 - Packaged as a proper Claude Code plugin (`.claude-plugin/plugin.json`,
   `hooks/hooks.json`) instead of the original's manual
   `~/.claude/skills/` + `~/.claude/hooks/` + hand-edited `settings.json` copy.
-- Moved `nudge`'s scripts under the skill's own `scripts/` folder and moved
-  its SQLite database from next to the scripts (which would be wiped on a
-  plugin update) to a stable path outside the plugin's installed directory
-  (`${CLAUDE_CONFIG_DIR:-~/.claude}/nudge/alerts.db`).
-- Added a short cross-reference to `i-have-adhd` in `daily-journal` and
-  `nudge` (optional, not a dependency).
+- Added a short cross-reference to `i-have-adhd` in `daily-journal`
+  (optional, not a dependency).
+- Only part of the upstream's skills are ported here; the rest are not
+  distributed.
 
 Original MIT license text:
 
@@ -62,8 +60,8 @@ ported from [ayghri/i-have-adhd](https://github.com/ayghri/i-have-adhd),
 licensed under the MIT License, copyright (c) 2026 Ayoub Ghriss.
 
 Changes made in this port:
-- Added a "Works well with" section cross-referencing `nudge` and
-  `daily-journal` (optional, not a dependency).
+- Added a "Works well with" section cross-referencing `daily-journal`
+  (optional, not a dependency).
 - No functional changes to the ruleset. The always-on hook mechanism is
   unchanged; only the path it resolves `SKILL.md` from was adjusted for this
   repository's layout.

@@ -6,7 +6,7 @@
   "marketplace": {
     "name": "miguelaguiardev-skills",
     "description": "Skills personales para Claude Code: el plugin `toolkit` las trae todas, o instala cada skill por separado",
-    "version": "3.0.0",
+    "version": "3.1.0",
     "owner": {
       "name": "Miguel Alejandro Santiesteban Aguiar",
       "url": "https://github.com/MiguelAguiarDEV"
@@ -28,10 +28,15 @@
     "ravila4-claude-adhd-skills": [
       "daily-journal",
       "obsidian-vault",
-      "nudge",
       "test-driven-development"
     ],
     "ayghri-i-have-adhd": ["i-have-adhd"]
+  },
+
+  "//renames": "former plugin name -> current name, or null if it was removed.",
+  "//renames2": "Lets Claude Code migrate users who already have it installed.",
+  "renames": {
+    "nudge": null
   },
 
   "//plugins": "skills: \"*\" means every skill. hooks and notices are derived.",
@@ -39,11 +44,11 @@
     {
       "name": "toolkit",
       "displayName": "Toolkit",
-      "version": "2.1.0",
+      "version": "3.0.0",
       "skills": "*",
       "category": "productivity",
       "keywords": ["skills", "bundle", "productivity", "adhd"],
-      "description": "Every personal skill in one plugin: how-to-chrome (drive the user's real Chrome via CDP), grill-me (stress-test a plan through questions), daily-journal (time-aware development journaling), obsidian-vault (personal markdown notes folder), nudge (time-based reminders), test-driven-development (Logic Gate + Iron Rule TDD), and i-have-adhd (ADHD-friendly output style)."
+      "description": "Every personal skill in one plugin: how-to-chrome (drive the user's real Chrome via CDP), grill-me (stress-test a plan through questions), daily-journal (time-aware development journaling), obsidian-vault (personal markdown notes folder), test-driven-development (Logic Gate + Iron Rule TDD), and i-have-adhd (ADHD-friendly output style)."
     },
     {
       "name": "how-to-chrome",
@@ -84,16 +89,6 @@
       "keywords": ["obsidian", "notes", "markdown", "vault"],
       "tagline": "Convenciones para una carpeta de notas personal (Obsidian opcional)",
       "description": "Folder structure, naming and formatting conventions for a personal markdown notes folder (Obsidian-compatible, Obsidian itself optional). Ported from ravila4/claude-adhd-skills."
-    },
-    {
-      "name": "nudge",
-      "displayName": "Nudge",
-      "version": "1.1.0",
-      "skills": ["nudge"],
-      "category": "productivity",
-      "keywords": ["reminders", "time", "focus", "adhd"],
-      "tagline": "Recordatorios por tiempo (parame a las 11, standup en 30m)",
-      "description": "Time-based reminders (\"stop me at 11\", \"standup in 30m\") via hook + SQLite. Not for process monitoring. Ported from ravila4/claude-adhd-skills."
     },
     {
       "name": "test-driven-development",

@@ -53,7 +53,7 @@ La fusion de hooks en `settings.json` necesita `python3`. Si no lo tienes, usa
 
 ```
 The build does not match the sources:
-  - out of date: plugins/nudge/.claude-plugin/plugin.json
+  - out of date: plugins/grill-me/.claude-plugin/plugin.json
 ```
 
 Alguien edito el build a mano o se olvido de regenerarlo:

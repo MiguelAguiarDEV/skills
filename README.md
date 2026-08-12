@@ -16,7 +16,6 @@ con su plugin individual, o **copiandolas** en tu `~/.claude`.
 | [`grill-me`](./skills/grill-me) | Te interroga sobre un plan o diseno hasta que no queden ramas del arbol de decision sin resolver, con una respuesta recomendada en cada pregunta. |
 | [`daily-journal`](./skills/daily-journal) † | Diario de desarrollo conversacional, consciente de la hora (mañana = planificacion, tarde/noche = reflexion). Escribe markdown estructurado. |
 | [`obsidian-vault`](./skills/obsidian-vault) † | Estructura, nombrado y formato para una carpeta de notas personal. Compatible con Obsidian, sin requerirlo. |
-| [`nudge`](./skills/nudge) † | Recordatorios por tiempo ("parame a las 11", "standup en 30m") via hook + SQLite. No sirve para monitorizar procesos. |
 | [`test-driven-development`](./skills/test-driven-development) † | Logic Gate + Iron Rule: triage de que necesita tests, luego TDD estricto para lo que tiene logica. |
 | [`i-have-adhd`](./skills/i-have-adhd) ‡ | Estilo de salida para lector con ADHD: accion primero, pasos numerados, sin relleno. **No se auto-invoca**: escribe `/i-have-adhd`. |
 
@@ -46,7 +45,7 @@ curl -fsSL https://raw.githubusercontent.com/MiguelAguiarDEV/skills/main/install
 
 ```bash
 ./install.sh --all                        # todas (plugin toolkit)
-./install.sh nudge how-to-chrome          # solo esas
+./install.sh grill-me how-to-chrome       # solo esas
 ./install.sh --all --scope project        # todas, para el equipo
 ```
 
@@ -67,8 +66,8 @@ Dentro de Claude Code son los mismos comandos con `/`:
 | `local` | `.claude/settings.local.json` | Solo tu, solo en ese proyecto |
 
 > **No instales `toolkit` y un plugin individual a la vez.** Son la misma skill
-> por dos caminos: se carga dos veces y, si tiene hook (`nudge`,
-> `daily-journal`, `i-have-adhd`), el hook corre dos veces por prompt.
+> por dos caminos: se carga dos veces y, si tiene hook (`daily-journal`,
+> `i-have-adhd`), el hook corre dos veces por prompt.
 > `install.sh` te avisa; a mano no.
 
 ### Copiando en tu carpeta de configuracion
@@ -77,7 +76,7 @@ Para usarlas fuera de Claude Code, o sin pasar por el marketplace:
 
 ```bash
 ./install.sh --copy --all             # vuelca skills/ y hooks/ en ~/.claude
-./install.sh --copy nudge grill-me    # solo esas
+./install.sh --copy grill-me how-to-chrome   # solo esas
 ./install.sh --copy --uninstall       # deshacerlo
 ```
 
@@ -93,12 +92,12 @@ espere sus skills.
 Alternativa que no toca tu `settings.json`:
 
 ```bash
-./install.sh --copy --as-plugin nudge   # -> ~/.claude/skills/nudge
+./install.sh --copy --as-plugin grill-me   # -> ~/.claude/skills/grill-me
 ```
 
-Copia el plugin ya construido, que Claude Code carga como `nudge@skills-dir`
+Copia el plugin ya construido, que Claude Code carga como `grill-me@skills-dir`
 con sus hooks dentro, sin marketplace y sin paso de instalacion. Se desactiva
-con `claude plugin disable nudge@skills-dir`.
+con `claude plugin disable grill-me@skills-dir`.
 
 ### Flags
 
@@ -120,8 +119,8 @@ con `claude plugin disable nudge@skills-dir`.
 claude plugin list                                  # que tienes instalado
 claude plugin details toolkit                       # skills, hooks y coste en tokens
 claude plugin update toolkit@miguelaguiardev-skills # actualizar
-claude plugin disable nudge                         # desactivar sin desinstalar
-claude plugin uninstall nudge@miguelaguiardev-skills
+claude plugin disable grill-me                      # desactivar sin desinstalar
+claude plugin uninstall grill-me@miguelaguiardev-skills
 claude plugin marketplace update miguelaguiardev-skills   # refrescar el catalogo
 ```
 

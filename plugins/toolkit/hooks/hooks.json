@@ -10,16 +10,6 @@
             "statusMessage": "Injecting current date/time..."
           }
         ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/skills/nudge/scripts/check_alerts.py\"",
-            "timeout": 5,
-            "statusMessage": "Checking for due nudges..."
-          }
-        ]
       }
     ],
     "SessionStart": [

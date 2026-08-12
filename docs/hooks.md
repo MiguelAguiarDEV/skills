@@ -6,10 +6,9 @@ instalado, uses o no la skill.
 | Evento | Que corre | De que skill | Fuente |
 |---|---|---|---|
 | `UserPromptSubmit` | inyeccion de fecha/hora | `daily-journal` | [`hooks/daily-journal.json`](../hooks/daily-journal.json) |
-| `UserPromptSubmit` | `check_alerts.py` | `nudge` | [`hooks/nudge.json`](../hooks/nudge.json) |
 | `SessionStart` | `always-on.sh` | `i-have-adhd` | [`hooks/i-have-adhd.json`](../hooks/i-have-adhd.json) |
 
-`toolkit` trae los tres; cada plugin individual solo el suyo. El build compone
+`toolkit` trae los dos; cada plugin individual solo el suyo. El build compone
 el `hooks/hooks.json` de cada plugin concatenando los fragmentos de las skills
 que incluye, asi que **no hay nada que mantener sincronizado a mano**.
 

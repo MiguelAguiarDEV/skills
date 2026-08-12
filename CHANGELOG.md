@@ -6,6 +6,16 @@ Las versiones son las de los plugins; el marketplace lleva la suya en
 
 ## [Sin publicar]
 
+### Removed
+
+- **Se elimina la skill `nudge`** y todo lo suyo: `skills/nudge/` con sus tres
+  scripts, `hooks/nudge.json` y el plugin `nudge`. El marketplace declara
+  `renames: { "nudge": null }`, asi que Claude Code retira el plugin de quien
+  lo tenga instalado en vez de dejarlo apuntando a una entrada inexistente.
+  Su base de datos (`${CLAUDE_CONFIG_DIR:-~/.claude}/nudge/alerts.db`) es tuya
+  y no la toca nadie: borrala a mano si no la quieres.
+- `toolkit` 2.1.0 → 3.0.0 (una skill menos), marketplace 3.0.0 → 3.1.0.
+
 ### Changed
 
 - **El repo se reorganiza como una carpeta de configuracion de agente.** Las
@@ -48,8 +58,8 @@ Las versiones son las de los plugins; el marketplace lleva la suya en
 
 ### Added (skills)
 
-- `compatibility` en `how-to-chrome` (Chrome + Node), `nudge` (python3 con
-  sqlite3) y `daily-journal` (python3).
+- `compatibility` en `how-to-chrome` (Chrome + Node) y `daily-journal`
+  (python3).
 
 ## [2.0.0]
 

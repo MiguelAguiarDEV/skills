@@ -22,12 +22,10 @@ Changes made in this port:
 - Packaged as a proper Claude Code plugin (`.claude-plugin/plugin.json`,
   `hooks/hooks.json`) instead of the original's manual
   `~/.claude/skills/` + `~/.claude/hooks/` + hand-edited `settings.json` copy.
-- Moved `nudge`'s scripts under the skill's own `scripts/` folder and moved
-  its SQLite database from next to the scripts (which would be wiped on a
-  plugin update) to a stable path outside the plugin's installed directory
-  (`${CLAUDE_CONFIG_DIR:-~/.claude}/nudge/alerts.db`).
-- Added a short cross-reference to `i-have-adhd` in `daily-journal` and
-  `nudge` (optional, not a dependency).
+- Added a short cross-reference to `i-have-adhd` in `daily-journal`
+  (optional, not a dependency).
+- Only part of the upstream's skills are ported here; the rest are not
+  distributed.
 
 Original MIT license text:
 

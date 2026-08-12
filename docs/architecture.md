@@ -45,19 +45,18 @@ viven troceados en `hooks/`) ni se puede volcar encima del tuyo. Es la unica
 desviacion consciente respecto a un `~/.claude` literal.
 
 **No se usa `metadata.pluginRoot`** en el marketplace, aunque permitiria escribir
-`"source": "nudge"` en vez de `"source": "./plugins/nudge"`. La forma explicita
+`"source": "grill-me"` en vez de `"source": "./plugins/grill-me"`. La forma explicita
 es la que esta probada aqui y ahorra nueve caracteres a cambio de un riesgo.
 
 **El fichero de hook se llama como la skill.** Eso es lo que le dice al build a
 que plugin pertenece cada hook, sin un mapa aparte. Un `hooks/foo.json` sin
 `skills/foo/` es un error de build.
 
-**Los scripts compartidos viven con la skill.** `check_alerts.py` lo llama el
-hook, pero comparte base SQLite con `add_alert.py` y `ack_alert.py`, que los
-llama la skill. Separarlos por quien los invoca los alejaria sin motivo, asi que
-los tres estan en `skills/nudge/scripts/` y el hook apunta ahi.
-`hooks/<name>/` es solo para scripts que no pertenecen a ninguna skill, como
-`always-on.sh`.
+**Los scripts compartidos viven con la skill.** Si un script lo invoca el hook
+pero comparte estado o utilidades con otros que invoca la skill, los tres se
+quedan en `skills/<name>/scripts/` y el hook apunta ahi: separarlos por quien
+los llama los alejaria sin motivo. `hooks/<name>/` es solo para scripts que no
+pertenecen a ninguna skill, como `always-on.sh`.
 
 ## Las dos rutas de instalacion tienen la misma forma
 
