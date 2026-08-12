@@ -1,0 +1,63 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  sources:
+    name: sources and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Validates the skills against the Agent Skills spec and fails if
+      # plugins/ or marketplace.json drifted from the sources.
+      - name: build --check
+        run: node build/build.mjs --check
+
+      - name: shell syntax
+        run: |
+          sh -n install.sh
+          sh -n hooks/i-have-adhd/always-on.sh
+
+      - name: python syntax
+        run: |
+          python3 -m py_compile build/merge-hooks.py
+          find skills -name '*.py' -print0 | xargs -0 -r python3 -m py_compile
+
+      - name: symlinks resolve
+        run: |
+          broken=$(find plugins -xtype l -print)
+          if [ -n "$broken" ]; then echo "broken symlinks:"; echo "$broken"; exit 1; fi
+
+  manifests:
+    name: plugin manifests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: install claude code
+        run: npm install -g @anthropic-ai/claude-code
+
+      # --strict turns unrecognized-field warnings into errors, which is what
+      # catches a typo in a manifest key before it ships.
+      - name: validate
+        run: |
+          set -e
+          for p in plugins/*/; do
+            echo "== $p"
+            claude plugin validate "$p" --strict
+          done
+          echo "== marketplace"
+          claude plugin validate . --strict

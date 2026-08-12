@@ -1,22 +1,35 @@
 #!/usr/bin/env sh
-# Installer for the miguelaguiardev-skills marketplace.
+# Installer for the miguelaguiardev-skills repository.
 #
-#   ./install.sh                      pick interactively
-#   ./install.sh --all                every skill, via the `toolkit` plugin
-#   ./install.sh nudge how-to-chrome  just those, as individual plugins
-#   ./install.sh --list               show what is available
+# Two ways in:
+#
+#   ./install.sh                     as Claude Code plugins, via the marketplace
+#   ./install.sh --copy              by copying into ~/.claude (any agent harness)
+#
+# Examples:
+#   ./install.sh                          pick interactively
+#   ./install.sh --all                    every skill, via the `toolkit` plugin
+#   ./install.sh nudge how-to-chrome      just those, as individual plugins
+#   ./install.sh --list                   show what is available
+#   ./install.sh --copy --all             copy every skill into ~/.claude
+#   ./install.sh --copy --as-plugin nudge copy nudge as a self-contained plugin
+#   ./install.sh --copy --uninstall       undo a --copy install
 #
 # Also works without cloning:
 #   curl -fsSL https://raw.githubusercontent.com/MiguelAguiarDEV/skills/main/install.sh | sh -s -- --all
 #
-# Pure POSIX sh, no jq/python needed: it only wraps the `claude plugin` CLI.
+# The marketplace path is pure POSIX sh with no jq/python: it only wraps the
+# `claude plugin` CLI. The --copy path needs python3 to merge hooks into
+# settings.json, and a checkout (it clones one into a temp dir if needed).
 
 set -eu
 
 MARKETPLACE_NAME="miguelaguiardev-skills"
 MARKETPLACE_SOURCE="MiguelAguiarDEV/skills"
+REPO_URL="https://github.com/MiguelAguiarDEV/skills.git"
 
 # name|one-line description. Order is the order shown in the picker.
+# BEGIN GENERATED SKILL_LIST -- node build/build.mjs
 SKILL_LIST="how-to-chrome|Manejar tu Chrome real desde la terminal via CDP
 grill-me|Interrogarte sobre un plan hasta que no queden ramas sin resolver
 daily-journal|Diario de desarrollo conversacional, consciente de la hora
@@ -24,6 +37,7 @@ obsidian-vault|Convenciones para una carpeta de notas personal (Obsidian opciona
 nudge|Recordatorios por tiempo (parame a las 11, standup en 30m)
 test-driven-development|Logic Gate + Iron Rule: TDD estricto donde hay logica
 i-have-adhd|Estilo de salida para lector con ADHD: accion primero, sin relleno"
+# END GENERATED SKILL_LIST
 
 SCOPE="user"
 SCOPE_SET=0
@@ -32,6 +46,11 @@ FORCE=0
 WANT_ALL=0
 SOURCE_OVERRIDE=""
 SELECTION=""
+MODE="marketplace"       # marketplace | copy
+COPY_STYLE="config"      # config (vuelca en ~/.claude) | plugin (@skills-dir)
+ACTION="install"         # install | uninstall
+REPO_DIR=""
+CLONED=""
 
 # ---------------------------------------------------------------- helpers
 
@@ -53,19 +72,36 @@ is_known_skill() {
   skill_names | grep -qx "$1"
 }
 
+config_dir() {
+  printf '%s' "${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+}
+
+cleanup() {
+  [ -n "$CLONED" ] && [ -d "$CLONED" ] && rm -rf "$CLONED"
+  return 0
+}
+trap cleanup EXIT INT TERM
+
 usage() {
   cat <<EOF
-Instala las skills de $MARKETPLACE_SOURCE en Claude Code.
+Instala las skills de $MARKETPLACE_SOURCE.
 
 Uso:
   ./install.sh [opciones] [skill ...]
 
 Sin argumentos abre un selector interactivo.
 
+Modo (por defecto: plugins de Claude Code via marketplace):
+  -c, --copy          Copia en ~/.claude en vez de instalar plugins
+      --as-plugin     Con --copy: copia cada plugin a ~/.claude/skills/<x>,
+                      que carga como <x>@skills-dir sin tocar tu settings.json
+  -u, --uninstall     Con --copy: deshace la copia (borra las skills y quita
+                      sus hooks de settings.json)
+
 Opciones:
-  -a, --all           Instala el plugin \`toolkit\` (todas las skills a la vez)
+  -a, --all           Todas las skills (plugin \`toolkit\` en modo marketplace)
   -l, --list          Lista las skills disponibles y sale
-  -s, --scope SCOPE   user (por defecto), project o local
+  -s, --scope SCOPE   user (por defecto), project o local. Solo marketplace
   -n, --dry-run       Enseña los comandos sin ejecutarlos
       --local [DIR]   Usa un checkout local como marketplace en vez de GitHub
   -f, --force         Salta el aviso de conflicto toolkit/plugin individual
@@ -75,6 +111,7 @@ Ejemplos:
   ./install.sh --all
   ./install.sh nudge how-to-chrome
   ./install.sh --scope project --all
+  ./install.sh --copy --all
 EOF
 }
 
@@ -113,6 +150,24 @@ read_tty() {
   read _reply < /dev/tty || return 1
   printf '%s' "$_reply"
   return 0
+}
+
+# --copy needs the actual files. When the script arrived through a pipe there
+# is no checkout to copy from, so clone a shallow one into a temp dir.
+ensure_checkout() {
+  [ -n "$REPO_DIR" ] && return 0
+
+  script_dir=$(CDPATH='' cd -- "$(dirname -- "$0")" 2>/dev/null && pwd) || script_dir=""
+  if [ -n "$script_dir" ] && [ -d "$script_dir/skills" ] && [ -d "$script_dir/build" ]; then
+    REPO_DIR="$script_dir"
+    return 0
+  fi
+
+  command -v git >/dev/null 2>&1 || die "--copy sin checkout necesita git. Clona el repo y vuelve a intentarlo."
+  CLONED=$(mktemp -d)
+  say "Clonando $REPO_URL..."
+  run git clone --depth 1 --quiet "$REPO_URL" "$CLONED"
+  REPO_DIR="$CLONED"
 }
 
 # ---------------------------------------------------------------- picker
@@ -240,6 +295,99 @@ check_conflicts() {
   exit 1
 }
 
+# ---------------------------------------------------------------- copy mode
+
+# Dumps skills/, agents/, commands/ and output-styles/ into the config dir and
+# merges the hooks of the selected skills into settings.json.
+copy_into_config() {
+  names="$1"
+  dest=$(config_dir)
+
+  say "Copiando en $dest ..."
+  run mkdir -p "$dest/skills"
+
+  hook_files=""
+  for name in $names; do
+    [ -d "$REPO_DIR/skills/$name" ] || die "no existe skills/$name en el checkout"
+    run rm -rf "$dest/skills/$name"
+    run cp -R "$REPO_DIR/skills/$name" "$dest/skills/$name"
+    say "  skills/$name"
+
+    if [ -d "$REPO_DIR/hooks/$name" ]; then
+      run mkdir -p "$dest/hooks"
+      run rm -rf "$dest/hooks/$name"
+      run cp -R "$REPO_DIR/hooks/$name" "$dest/hooks/$name"
+      say "  hooks/$name/"
+    fi
+    if [ -f "$REPO_DIR/hooks/$name.json" ]; then
+      hook_files="$hook_files $REPO_DIR/hooks/$name.json"
+    fi
+  done
+
+  # Loose components are not tied to a single skill, so they only travel with
+  # a full install.
+  if [ "$WANT_ALL" -eq 1 ]; then
+    for dir in agents commands output-styles; do
+      if [ -d "$REPO_DIR/$dir" ] && [ -n "$(ls -A "$REPO_DIR/$dir" 2>/dev/null)" ]; then
+        run mkdir -p "$dest/$dir"
+        run cp -R "$REPO_DIR/$dir/." "$dest/$dir/"
+        say "  $dir/"
+      fi
+    done
+  fi
+
+  if [ -n "$hook_files" ]; then
+    command -v python3 >/dev/null 2>&1 \
+      || die "hace falta python3 para fusionar los hooks en settings.json (o usa --as-plugin)"
+    say ""
+    say "Fusionando hooks en $dest/settings.json ..."
+    # shellcheck disable=SC2086
+    run python3 "$REPO_DIR/build/merge-hooks.py" add "$dest/settings.json" $hook_files
+  fi
+}
+
+# Copies the built plugin instead, which loads as <name>@skills-dir and keeps
+# its hooks to itself. -L dereferences the symlinks in the build.
+copy_as_plugin() {
+  names="$1"
+  dest=$(config_dir)
+
+  say "Copiando plugins en $dest/skills ..."
+  run mkdir -p "$dest/skills"
+  for name in $names; do
+    [ -d "$REPO_DIR/plugins/$name" ] || die "no existe plugins/$name en el checkout"
+    run rm -rf "$dest/skills/$name"
+    run cp -RL "$REPO_DIR/plugins/$name" "$dest/skills/$name"
+    say "  $name -> carga como ${name}@skills-dir"
+  done
+}
+
+uninstall_copy() {
+  dest=$(config_dir)
+  say "Deshaciendo la instalacion por copia en $dest ..."
+
+  for name in $(skill_names) toolkit; do
+    if [ -d "$dest/skills/$name" ]; then
+      run rm -rf "$dest/skills/$name"
+      say "  borrado skills/$name"
+    fi
+    if [ -d "$dest/hooks/$name" ]; then
+      run rm -rf "$dest/hooks/$name"
+      say "  borrado hooks/$name"
+    fi
+  done
+
+  if [ -f "$dest/.miguelaguiardev-skills-hooks.json" ]; then
+    command -v python3 >/dev/null 2>&1 \
+      || die "hace falta python3 para quitar los hooks de settings.json"
+    ensure_checkout
+    run python3 "$REPO_DIR/build/merge-hooks.py" remove "$dest/settings.json"
+  fi
+
+  say ""
+  say "Listo. Reinicia la sesion de Claude Code."
+}
+
 # ---------------------------------------------------------------- main
 
 while [ $# -gt 0 ]; do
@@ -249,6 +397,9 @@ while [ $# -gt 0 ]; do
     -a|--all) WANT_ALL=1 ;;
     -n|--dry-run) DRY_RUN=1 ;;
     -f|--force) FORCE=1 ;;
+    -c|--copy) MODE="copy" ;;
+    --as-plugin) COPY_STYLE="plugin" ;;
+    -u|--uninstall) ACTION="uninstall" ;;
     -s|--scope)
       [ $# -ge 2 ] || die "--scope necesita un valor (user, project o local)"
       SCOPE="$2"; SCOPE_SET=1; shift
@@ -278,13 +429,16 @@ while [ $# -gt 0 ]; do
   shift
 done
 
+if [ "$ACTION" = "uninstall" ]; then
+  [ "$MODE" = "copy" ] || die "--uninstall solo aplica a --copy. Para plugins usa: claude plugin uninstall <x>@$MARKETPLACE_NAME"
+  uninstall_copy
+  exit 0
+fi
+
 case "$SCOPE" in
   user|project|local) ;;
   *) die "scope no valido: $SCOPE (usa user, project o local)" ;;
 esac
-
-command -v claude >/dev/null 2>&1 \
-  || die "no encuentro el comando \`claude\`. Instala Claude Code primero: https://code.claude.com"
 
 if [ "$WANT_ALL" -eq 1 ]; then
   [ -z "$SELECTION" ] || die "--all/toolkit ya instala todas: no lo mezcles con skills sueltas."
@@ -295,9 +449,44 @@ SELECTION=$(printf '%s' "$SELECTION" | sed 's/^ *//')
 if [ -z "$SELECTION" ]; then
   pick_interactive
   # Interactive run: ask where too, unless --scope already answered it.
-  [ "$SCOPE_SET" -eq 1 ] || pick_scope
+  if [ "$MODE" = "marketplace" ] && [ "$SCOPE_SET" -eq 0 ]; then
+    pick_scope
+  fi
 fi
 SELECTION=$(printf '%s' "$SELECTION" | sed 's/^ *//')
+case " $SELECTION " in *" toolkit "*) WANT_ALL=1 ;; esac
+
+# ------------------------------------------------------------ copy install
+
+if [ "$MODE" = "copy" ]; then
+  ensure_checkout
+  say ""
+  if [ "$COPY_STYLE" = "plugin" ]; then
+    copy_as_plugin "$SELECTION"
+  else
+    # `toolkit` is a packaging concept; copying it means copying every skill.
+    if [ "$WANT_ALL" -eq 1 ]; then
+      names=$(skill_names | tr '\n' ' ')
+    else
+      names="$SELECTION"
+    fi
+    copy_into_config "$names"
+  fi
+
+  say ""
+  if [ "$DRY_RUN" -eq 1 ]; then
+    say "Dry run: no se ha tocado nada."
+    exit 0
+  fi
+  say "Listo. Reinicia la sesion de Claude Code para que carguen los hooks."
+  say "Para deshacerlo:  ./install.sh --copy --uninstall"
+  exit 0
+fi
+
+# ----------------------------------------------------- marketplace install
+
+command -v claude >/dev/null 2>&1 \
+  || die "no encuentro el comando \`claude\`. Instala Claude Code primero: https://code.claude.com"
 
 check_conflicts "$SELECTION"
 

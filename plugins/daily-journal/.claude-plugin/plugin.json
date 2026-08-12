@@ -1,8 +1,20 @@
 {
+  "$schema": "https://www.schemastore.org/claude-code-plugin-manifest.json",
   "name": "daily-journal",
+  "displayName": "Daily Journal",
   "description": "Time-aware conversational development journal (morning=planning, evening=reflection). Writes structured markdown; Obsidian optional. Ported from ravila4/claude-adhd-skills.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": {
-    "name": "Miguel Alejandro Santiesteban Aguiar"
-  }
+    "name": "Miguel Alejandro Santiesteban Aguiar",
+    "url": "https://github.com/MiguelAguiarDEV"
+  },
+  "homepage": "https://github.com/MiguelAguiarDEV/skills#readme",
+  "repository": "https://github.com/MiguelAguiarDEV/skills",
+  "license": "MIT",
+  "keywords": [
+    "journal",
+    "standup",
+    "notes",
+    "adhd"
+  ]
 }

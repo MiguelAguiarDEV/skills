@@ -4,6 +4,7 @@ description: Draft, organize, or update development journal entries. Use when us
 argumentHint: "[--date YYYY-MM-DD] [--quick]"
 userInvocable: true
 license: MIT (ported from ravila4/claude-adhd-skills, see ../../NOTICE.md)
+compatibility: Requires python3 for the session-data collector. Obsidian is optional; the skill only writes plain markdown.
 ---
 
 # Daily Journal

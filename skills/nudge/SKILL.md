@@ -2,6 +2,7 @@
 name: nudge
 description: Nudge the user with time-based reminders (stopping times, meetings, break suggestions). Surfaces via hook on prompt submission -- requires human interaction to fire. NOT for process monitoring or job polling -- use `sleep` in Bash instead.
 license: MIT (ported from ravila4/claude-adhd-skills, see ../../NOTICE.md)
+compatibility: Requires python3 with the sqlite3 stdlib module. The hook only fires on user interaction.
 ---
 
 # Nudge

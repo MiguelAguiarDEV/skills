@@ -1,52 +1,182 @@
 {
+  "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
   "name": "miguelaguiardev-skills",
   "owner": {
-    "name": "Miguel Alejandro Santiesteban Aguiar"
+    "name": "Miguel Alejandro Santiesteban Aguiar",
+    "url": "https://github.com/MiguelAguiarDEV"
   },
   "metadata": {
     "description": "Skills personales para Claude Code: el plugin `toolkit` las trae todas, o instala cada skill por separado",
-    "version": "2.0.0"
+    "version": "3.0.0"
   },
   "plugins": [
     {
       "name": "toolkit",
+      "source": "./plugins/toolkit",
+      "displayName": "Toolkit",
       "description": "Every personal skill in one plugin: how-to-chrome (drive the user's real Chrome via CDP), grill-me (stress-test a plan through questions), daily-journal (time-aware development journaling), obsidian-vault (personal markdown notes folder), nudge (time-based reminders), test-driven-development (Logic Gate + Iron Rule TDD), and i-have-adhd (ADHD-friendly output style).",
-      "source": "./plugins/toolkit"
+      "version": "2.1.0",
+      "author": {
+        "name": "Miguel Alejandro Santiesteban Aguiar",
+        "url": "https://github.com/MiguelAguiarDEV"
+      },
+      "homepage": "https://github.com/MiguelAguiarDEV/skills#readme",
+      "repository": "https://github.com/MiguelAguiarDEV/skills",
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "skills",
+        "bundle",
+        "productivity",
+        "adhd"
+      ]
     },
     {
       "name": "how-to-chrome",
+      "source": "./plugins/how-to-chrome",
+      "displayName": "How to Chrome",
       "description": "Control the user's real Google Chrome (their profile, cookies and logged-in sessions) from the terminal via the Chrome DevTools Protocol: navigate, capture (incl. full page and per breakpoint), read console/DOM, fill forms, export to PDF, annotate elements, and group tabs. No extension, no MCP, no npm dependencies.",
-      "source": "./plugins/how-to-chrome"
+      "version": "1.1.0",
+      "author": {
+        "name": "Miguel Alejandro Santiesteban Aguiar",
+        "url": "https://github.com/MiguelAguiarDEV"
+      },
+      "homepage": "https://github.com/MiguelAguiarDEV/skills#readme",
+      "repository": "https://github.com/MiguelAguiarDEV/skills",
+      "license": "MIT",
+      "category": "development",
+      "keywords": [
+        "chrome",
+        "cdp",
+        "screenshot",
+        "browser",
+        "qa"
+      ]
     },
     {
       "name": "grill-me",
+      "source": "./plugins/grill-me",
+      "displayName": "Grill Me",
       "description": "Interview the user relentlessly about a plan or design until reaching shared understanding, resolving each branch of the decision tree with a recommended answer at every question.",
-      "source": "./plugins/grill-me"
+      "version": "1.1.0",
+      "author": {
+        "name": "Miguel Alejandro Santiesteban Aguiar",
+        "url": "https://github.com/MiguelAguiarDEV"
+      },
+      "homepage": "https://github.com/MiguelAguiarDEV/skills#readme",
+      "repository": "https://github.com/MiguelAguiarDEV/skills",
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "planning",
+        "review",
+        "questions",
+        "design"
+      ]
     },
     {
       "name": "daily-journal",
+      "source": "./plugins/daily-journal",
+      "displayName": "Daily Journal",
       "description": "Time-aware conversational development journal (morning=planning, evening=reflection). Writes structured markdown; Obsidian optional. Ported from ravila4/claude-adhd-skills.",
-      "source": "./plugins/daily-journal"
+      "version": "1.1.0",
+      "author": {
+        "name": "Miguel Alejandro Santiesteban Aguiar",
+        "url": "https://github.com/MiguelAguiarDEV"
+      },
+      "homepage": "https://github.com/MiguelAguiarDEV/skills#readme",
+      "repository": "https://github.com/MiguelAguiarDEV/skills",
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "journal",
+        "standup",
+        "notes",
+        "adhd"
+      ]
     },
     {
       "name": "obsidian-vault",
+      "source": "./plugins/obsidian-vault",
+      "displayName": "Obsidian Vault",
       "description": "Folder structure, naming and formatting conventions for a personal markdown notes folder (Obsidian-compatible, Obsidian itself optional). Ported from ravila4/claude-adhd-skills.",
-      "source": "./plugins/obsidian-vault"
+      "version": "1.1.0",
+      "author": {
+        "name": "Miguel Alejandro Santiesteban Aguiar",
+        "url": "https://github.com/MiguelAguiarDEV"
+      },
+      "homepage": "https://github.com/MiguelAguiarDEV/skills#readme",
+      "repository": "https://github.com/MiguelAguiarDEV/skills",
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "obsidian",
+        "notes",
+        "markdown",
+        "vault"
+      ]
     },
     {
       "name": "nudge",
+      "source": "./plugins/nudge",
+      "displayName": "Nudge",
       "description": "Time-based reminders (\"stop me at 11\", \"standup in 30m\") via hook + SQLite. Not for process monitoring. Ported from ravila4/claude-adhd-skills.",
-      "source": "./plugins/nudge"
+      "version": "1.1.0",
+      "author": {
+        "name": "Miguel Alejandro Santiesteban Aguiar",
+        "url": "https://github.com/MiguelAguiarDEV"
+      },
+      "homepage": "https://github.com/MiguelAguiarDEV/skills#readme",
+      "repository": "https://github.com/MiguelAguiarDEV/skills",
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "reminders",
+        "time",
+        "focus",
+        "adhd"
+      ]
     },
     {
       "name": "test-driven-development",
+      "source": "./plugins/test-driven-development",
+      "displayName": "Test-Driven Development",
       "description": "Logic Gate + Iron Rule: triage what actually needs tests, then strict test-first development for anything with logic. Ported from ravila4/claude-adhd-skills.",
-      "source": "./plugins/test-driven-development"
+      "version": "1.1.0",
+      "author": {
+        "name": "Miguel Alejandro Santiesteban Aguiar",
+        "url": "https://github.com/MiguelAguiarDEV"
+      },
+      "homepage": "https://github.com/MiguelAguiarDEV/skills#readme",
+      "repository": "https://github.com/MiguelAguiarDEV/skills",
+      "license": "MIT",
+      "category": "development",
+      "keywords": [
+        "tdd",
+        "tests",
+        "workflow"
+      ]
     },
     {
       "name": "i-have-adhd",
+      "source": "./plugins/i-have-adhd",
+      "displayName": "I Have ADHD",
       "description": "Shape Claude Code output for an ADHD reader: lead with the next action, number steps, suppress tangents, restate state, make wins visible. Ported from ayghri/i-have-adhd.",
-      "source": "./plugins/i-have-adhd"
+      "version": "1.1.0",
+      "author": {
+        "name": "Miguel Alejandro Santiesteban Aguiar",
+        "url": "https://github.com/MiguelAguiarDEV"
+      },
+      "homepage": "https://github.com/MiguelAguiarDEV/skills#readme",
+      "repository": "https://github.com/MiguelAguiarDEV/skills",
+      "license": "MIT",
+      "category": "productivity",
+      "keywords": [
+        "adhd",
+        "output-style",
+        "formatting",
+        "accessibility"
+      ]
     }
   ]
 }

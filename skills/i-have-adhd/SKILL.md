@@ -4,10 +4,9 @@ description: 'Shape output for a reader with ADHD: lead with the next action, nu
 disable-model-invocation: true
 license: MIT (ported from ayghri/i-have-adhd, see ../../NOTICE.md)
 metadata:
-  hermes:
-    tags: [ADHD, Output Style, Productivity, Formatting]
-    category: productivity
-    related_skills: [nudge, daily-journal]
+  tags: "adhd, output-style, productivity, formatting"
+  category: productivity
+  related-skills: "nudge, daily-journal"
 ---
 
 # i-have-adhd
